@@ -11,8 +11,6 @@ class TestClient(TestCase):
             async with ouvrir_client() as client:
                 client.tableaux.suivreDonnées()
 
-
-
 class Test(TestCase):
 
     async def setUp(soimême) -> None:
