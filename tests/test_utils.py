@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from client_constellation.utils import à_chameau
+from constellationPy.utils import à_chameau
 
 
 class TestUtils(TestCase):

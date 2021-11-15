@@ -1,10 +1,11 @@
 from unittest import TestCase
 
-# import semantic_version as sv
-
-from client_constellation.client import ouvrir_client
-from client_constellation.serveur import obtenir_context
+from constellationPy.client import ouvrir_client
+from constellationPy.serveur import obtenir_context
 from tests.ressources.faux_serveur import Serveur
+
+
+# import semantic_version as sv
 
 
 class TestServeur(TestCase):

@@ -12,8 +12,7 @@ from .serveur import obtenir_context
 from .utils import à_chameau
 
 
-# Idée de https://stackoverflow.com/questions/48282841/in-trio-how-can-i-have-a-background-task-that-
-# lives-as-long-as-my-object-does
+# Idée de https://stackoverflow.com/questions/48282841/in-trio-how-can-i-have-a-background-task-that-lives-as-long-as-my-object-does
 @asynccontextmanager
 async def ouvrir_client(port: Optional[int] = None):
     async with trio.open_nursery() as pouponnière:
@@ -107,7 +106,7 @@ class Client(trio.abc.AsyncResource):
 
         # démarrer l'écoute
         soimême.canaux = trio.open_memory_channel(0)
-        soimême._context_annuler_écoute = soimême.pouponnière.start(soimême._écouter)
+        soimême._context_annuler_écoute = await soimême.pouponnière.start(soimême._écouter)
 
         message_init = {"type": "init"}
         soimême.pouponnière.start_soon(soimême._envoyer_au_port, message_init)
@@ -123,9 +122,9 @@ class Client(trio.abc.AsyncResource):
             await soimême._connexion.aclose()
             soimême._connexion = None
 
-    async def _écouter(soimême):
+    async def _écouter(soimême, task_status=trio.TASK_STATUS_IGNORED):
         with trio.CancelScope() as _context:
-            trio.TASK_STATUS_IGNORED.started(_context)
+            task_status.started(_context)
             async with soimême.canal_envoie.clone() as canal_envoie:
                 while True:
                     message = await soimême.connexion.get_message()
@@ -175,6 +174,7 @@ class Client(trio.abc.AsyncResource):
             soimême._client_original._messages_en_attente.append(message)
 
     async def _envoyer_au_port(soimême, message: Dict):
+        # print(message)
         await soimême.connexion.send_message(json.dumps(message))
 
     async def _ipa_activée(soimême) -> None:
@@ -239,7 +239,7 @@ class Client(trio.abc.AsyncResource):
                         if val["id"] == id_:
                             await f(val["résultat"])
 
-        context = soimême.pouponnière.start(_suiveur, soimême.canal_réception.clone())
+        context = await soimême.pouponnière.start(_suiveur, soimême.canal_réception.clone())
 
         await soimême._envoyer_message(message)
 

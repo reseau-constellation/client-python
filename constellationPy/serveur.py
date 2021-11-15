@@ -1,9 +1,5 @@
-import os
 import subprocess
-import warnings
 from typing import Optional, TypedDict, Union, List, Tuple
-
-import trio
 
 TypeExe = Union[str, List[str]]
 
@@ -20,33 +16,35 @@ def _obt_version(commande: Union[str, List[str]], arg="-v") -> Optional[str]:
     if résultat.returncode == 0:
         return résultat.stdout.decode()
 
-    warnings.warn(f"Erreur serveur Constellation: {résultat}")
+    print(f"Erreur serveur Constellation: {résultat}")
 
 
 def _assurer_constellation_installée():
-    version_npm = obt_version_npm()
-    if not version_npm:
-        raise FileNotFoundError("Vous devez installer Node.js au https://nodejs.org/fr/download/.")
-
-    version_yarn = obt_version_yarn()
-    if not version_yarn:
-        résultat_yarn = subprocess.run(["npm", "install", "-g", "yarn"], capture_output=True)
-        if résultat_yarn.returncode != 0:
-            raise ConnectionError(
-                f"Erreur d'installation de Yarn :\n\t{résultat_yarn.stderr.decode()}"
-            )
-
     version_constellation = obt_version_constellation()
     if not version_constellation:
-        résultat_constellation = subprocess.run(["yarn", "global", "add", "@constl/serveur"], capture_output=True)
-        if résultat_constellation.returncode != 0:
-            raise ConnectionError(
-                f"Erreur d'installation de Constellation :\n\t{résultat_constellation.stderr.decode()}"
-            )
+
+        version_npm = obt_version_npm()
+        if not version_npm:
+            raise FileNotFoundError("Vous devez installer Node.js au https://nodejs.org/fr/download/.")
+
+        version_yarn = obt_version_yarn()
+        if not version_yarn:
+            résultat_yarn = subprocess.run(["npm", "install", "-g", "yarn"], capture_output=True)
+            if résultat_yarn.returncode != 0:
+                raise ConnectionError(
+                    f"Erreur d'installation de Yarn :\n\t{résultat_yarn.stderr.decode()}"
+                )
+
+        for paquet in ["@constl/ipa", "@constl/serveur"]:
+            résultat_constellation = subprocess.run(["yarn", "global", "add", paquet], capture_output=True)
+            if résultat_constellation.returncode != 0:
+                raise ConnectionError(
+                    f"Erreur d'installation de Constellation :\n\t{résultat_constellation.stderr.decode()}"
+                )
 
 
 def obt_version_constellation(exe: TypeExe = "constl") -> Optional[str]:
-    return _obt_version(exe, "version")
+    return _obt_version(exe)
 
 
 def obt_version_yarn() -> Optional[str]:
@@ -57,7 +55,7 @@ def obt_version_npm() -> Optional[str]:
     return _obt_version("npm", "version")
 
 
-def lancer_serveur(port=None, autoinstaller=True, exe: TypeExe = "const-ws") -> Tuple[subprocess.Popen, int]:
+def lancer_serveur(port=None, autoinstaller=True, exe: TypeExe = "constl") -> Tuple[subprocess.Popen, int]:
     if isinstance(exe, str):
         exe = [exe]
 
@@ -103,7 +101,7 @@ def obtenir_context() -> Optional[int]:
 
 class Serveur(object):
 
-    def __init__(soimême, port=None, autoinstaller=True, exe: TypeExe = "constl-ws"):
+    def __init__(soimême, port=None, autoinstaller=True, exe: TypeExe = "constl"):
         soimême.port = port
         soimême.autoinstaller = autoinstaller
         soimême.exe = exe

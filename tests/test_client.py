@@ -3,7 +3,7 @@ from unittest import TestCase
 
 import semantic_version as sv
 
-from client_constellation.client import ouvrir_client
+from constellationPy.client import ouvrir_client
 from .ressources.faux_serveur import Serveur
 
 

@@ -1,7 +1,9 @@
 import json
 import sys
 
+import click
 import trio
+from click_default_group import DefaultGroup
 from trio_websocket import serve_websocket, ConnectionClosed
 
 
@@ -33,21 +35,23 @@ async def serveur(request):
             break
 
 
-args = sys.argv[1:]
-commande = args[0]
-
-
-def écrire_à_stdout(message: str):
-    print(message)
+def écrire_à_stdout(*message: str):
+    print(*message)
     sys.stdout.flush()
 
 
-if commande == "version":
-    écrire_à_stdout("1.0.0")
-elif commande == "lancer":
+@click.group(cls=DefaultGroup, default='lancer', default_if_no_args=True)
+def cli():
+    pass
 
-    port = args[2] if len(args) >= 3 else None
 
+@cli.command("lancer")
+@click.option('--port', default=None)
+@click.option("-v", '--version/--sans-version', default=False)
+def lancer(port, version):
+    if version:
+        écrire_à_stdout("1.0.0")
+        return
 
     async def main():
         écrire_à_stdout("Initialisation du serveur")
@@ -72,5 +76,8 @@ elif commande == "lancer":
             écrire_à_stdout(f"Serveur prêt sur port : {port_}")
             sys.stdout.flush()
 
-
     trio.run(main)
+
+
+if __name__ == '__main__':
+    cli()
