@@ -36,20 +36,40 @@ async def serveur(request):
 args = sys.argv[1:]
 commande = args[0]
 
+
+def écrire_à_stdout(message: str):
+    print(message)
+    sys.stdout.flush()
+
+
 if commande == "version":
-    print("1.0.0")
+    écrire_à_stdout("1.0.0")
 elif commande == "lancer":
-    if len(args) >= 3:
-        port = args[2]
-    else:
-        port = 5001
+
+    port = args[2] if len(args) >= 3 else None
+
 
     async def main():
-        print("Initialisation du serveur")
-        sys.stdout.flush()
+        écrire_à_stdout("Initialisation du serveur")
+        port_ = port or 5000
+
         async with trio.open_nursery() as pouponnière:
-            await pouponnière.start(serve_websocket, serveur, 'localhost', int(port), None)
-            print(f"Serveur prêt sur port : {port}")
+            async def _lancer_port_ws(p):
+                await pouponnière.start(serve_websocket, serveur, 'localhost', int(p), None)
+
+            if port:
+                await _lancer_port_ws(port_)
+            else:
+                while True:
+                    try:
+                        await _lancer_port_ws(port_)
+                        break
+                    except OSError as e:
+                        if e.args[1] == "Address already in use":
+                            port_ += 1
+                        else:
+                            raise e
+            écrire_à_stdout(f"Serveur prêt sur port : {port_}")
             sys.stdout.flush()
 
 

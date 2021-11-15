@@ -1,6 +1,4 @@
-import time
 import unittest
-from time import sleep
 from unittest import TestCase
 
 import semantic_version as sv
@@ -15,7 +13,6 @@ class TestClient(TestCase):
     def setUpClass(cls) -> None:
         cls.serveur = Serveur()
         cls.serveur.__enter__()
-        time.sleep(5)
 
     async def test_kebab_et_chameau(soimême):
         async with ouvrir_client() as client:

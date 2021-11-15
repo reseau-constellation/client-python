@@ -74,7 +74,6 @@ def lancer_serveur(port=None, autoinstaller=True, exe: TypeExe = "const-ws") -> 
         cmd, stdout=subprocess.PIPE, bufsize=0, universal_newlines=True
     )
     for ligne in iter(p.stdout.readline, b''):
-        print("ligne", ligne)
         if not ligne:
             break
         if ligne.startswith("Serveur prêt sur port :"):
@@ -83,23 +82,23 @@ def lancer_serveur(port=None, autoinstaller=True, exe: TypeExe = "const-ws") -> 
     return p, port
 
 
-type_context = TypedDict("type_context", {"serveur": Optional[int]})
-context: type_context = {"serveur": None}
+type_context = TypedDict("type_context", {"port_serveur": Optional[int]})
+context: type_context = {"port_serveur": None}
 
 
 def changer_context(port: int):
-    if context["serveur"] is not None:
+    if context["port_serveur"] is not None:
         raise RuntimeError("On ne peut avoir qu'un serveur en context à la fois.")
 
-    context["serveur"] = port
+    context["port_serveur"] = port
 
 
 def effacer_context():
-    context["serveur"] = None
+    context["port_serveur"] = None
 
 
 def obtenir_context() -> Optional[int]:
-    return context["serveur"]
+    return context["port_serveur"]
 
 
 class Serveur(object):
@@ -112,10 +111,10 @@ class Serveur(object):
         soimême.serveur: Optional[subprocess.Popen] = None
 
     def __enter__(soimême):
-        changer_context(soimême.port)
         soimême.serveur, soimême.port = lancer_serveur(soimême.port, soimême.autoinstaller, soimême.exe)
+        changer_context(soimême.port)
         return soimême
 
-    def __exit__(soimême, exc_type, exc_val, exc_tb):
+    def __exit__(soimême, *args):
         effacer_context()
         soimême.serveur.terminate()
