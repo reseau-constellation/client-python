@@ -103,8 +103,7 @@ class Client(trio.abc.AsyncResource):
         url = f"ws://localhost:{port}"
 
         # établir la connexion
-        soimême.connexion = tw.open_websocket_url(url)
-        await soimême.connexion.__aenter__()
+        soimême.connexion = await tw.open_websocket_url(url).__aenter__()
 
         # démarrer l'écoute
         soimême.canaux = trio.open_memory_channel(0)
@@ -114,12 +113,15 @@ class Client(trio.abc.AsyncResource):
         soimême.pouponnière.start_soon(soimême._envoyer_au_port, message_init)
 
     async def aclose(soimême):
+        if soimême is not soimême._client_original:
+            return
+
         if soimême._context_annuler_écoute:
             soimême._context_annuler_écoute.cancel()
 
         if soimême._connexion:
-            await soimême._connexion.__aexit__()
-        soimême._connexion = None
+            await soimême._connexion.aclose()
+            soimême._connexion = None
 
     async def _écouter(soimême):
         with trio.CancelScope() as _context:
@@ -265,9 +267,9 @@ class Client(trio.abc.AsyncResource):
 
         id_ = str(uuid4())
         liste_args = list(args)
-        i_arg_fonction = next(i for i, é in enumerate(liste_args) if callable(é))
+        i_arg_fonction = next((i for i, é in enumerate(liste_args) if callable(é)), None)
 
-        if i_arg_fonction:
+        if i_arg_fonction is not None:
             return await soimême._appeler_fonction_suivre(
                 id_, adresse_fonction=soimême._liste_atributs, liste_args=liste_args, i_arg_fonction=i_arg_fonction
             )

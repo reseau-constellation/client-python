@@ -1,4 +1,9 @@
+import time
+import unittest
+from time import sleep
 from unittest import TestCase
+
+import semantic_version as sv
 
 from client_constellation.client import ouvrir_client
 from .ressources.faux_serveur import Serveur
@@ -6,16 +11,44 @@ from .ressources.faux_serveur import Serveur
 
 class TestClient(TestCase):
 
-    async def test_serveur(soimême):
-        with Serveur():
-            async with ouvrir_client() as client:
-                client.tableaux.suivreDonnées()
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.serveur = Serveur()
+        cls.serveur.__enter__()
+        time.sleep(5)
+
+    async def test_kebab_et_chameau(soimême):
+        async with ouvrir_client() as client:
+            version_kebab = await client.obt_version()
+            version_chameau = await client.obtVersion()
+            soimême.assertEqual(version_kebab, version_chameau)
+
+    @unittest.skip
+    async def test_sousmodule(soimême):
+        async with ouvrir_client() as client:
+            id_orbite = await client.obtIdOrbite()
+            soimême.assertIsInstance(id_orbite, str)
+
+    async def test_action(soimême):
+        async with ouvrir_client() as client:
+            version = await client.obt_version()
+            sv.SimpleSpec(version)
+
+    async def test_suivre(soimême):
+        async with ouvrir_client() as client:
+            pass
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.serveur.__exit__()
+
 
 class Test(TestCase):
 
-    async def setUp(soimême) -> None:
-        soimême.client = Client()
-        await soimême.client.__aenter__()
+    @classmethod
+    async def setUpClass(cls) -> None:
+        cls.client = Client()
+        await cls.client.__aenter__()
 
     async def test_functionality(soimême):
         données = await soimême.client.obt_données_tableau("orbitdb/...")
@@ -30,5 +63,6 @@ class Test(TestCase):
         données2 = await une_fois(lambda x: soimême.client.tableaux.suivreDonnées("orbitdb/...", x))
         soimême.assertEqual(expected, result)
 
-
-
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.client.__aexit__()

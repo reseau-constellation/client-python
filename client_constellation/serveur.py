@@ -1,15 +1,26 @@
+import os
 import subprocess
-from typing import Optional
+import warnings
+from typing import Optional, TypedDict, Union, List, Tuple
+
+import trio
+
+TypeExe = Union[str, List[str]]
 
 
-def _obt_version(commande: str, arg="-v") -> Optional[str]:
+def _obt_version(commande: Union[str, List[str]], arg="-v") -> Optional[str]:
+    if isinstance(commande, str):
+        commande = [commande]
+
     try:
-        résultat = subprocess.run([commande, arg], capture_output=True)
+        résultat = subprocess.run([*commande, arg], capture_output=True)
     except FileNotFoundError:
         return
 
     if résultat.returncode == 0:
         return résultat.stdout.decode()
+
+    warnings.warn(f"Erreur serveur Constellation: {résultat}")
 
 
 def _assurer_constellation_installée():
@@ -27,15 +38,15 @@ def _assurer_constellation_installée():
 
     version_constellation = obt_version_constellation()
     if not version_constellation:
-        résultat_constellation = subprocess.run(["yarn", "global", "add", "@constl/serveur-ws"], capture_output=True)
+        résultat_constellation = subprocess.run(["yarn", "global", "add", "@constl/serveur"], capture_output=True)
         if résultat_constellation.returncode != 0:
             raise ConnectionError(
                 f"Erreur d'installation de Constellation :\n\t{résultat_constellation.stderr.decode()}"
             )
 
 
-def obt_version_constellation() -> Optional[str]:
-    return _obt_version("constl-ws")
+def obt_version_constellation(exe: TypeExe = "constl") -> Optional[str]:
+    return _obt_version(exe, "version")
 
 
 def obt_version_yarn() -> Optional[str]:
@@ -46,16 +57,34 @@ def obt_version_npm() -> Optional[str]:
     return _obt_version("npm", "version")
 
 
-def lancer_serveur(port=5000, autoinstaller=True) -> subprocess.Popen:
+def lancer_serveur(port=None, autoinstaller=True, exe: TypeExe = "const-ws") -> Tuple[subprocess.Popen, int]:
+    if isinstance(exe, str):
+        exe = [exe]
+
     if autoinstaller:
         _assurer_constellation_installée()
-    version = obt_version_constellation()
+    version = obt_version_constellation(exe)
+
     if not version:
         raise ChildProcessError("Constellation doit être installé sur votre appareil.")
-    return subprocess.Popen(["constl-ws", "-p", str(port)])
+    cmd = [*exe, "lancer"]
+    if port:
+        cmd += ["-p", str(port)]
+    p = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, bufsize=0, universal_newlines=True
+    )
+    for ligne in iter(p.stdout.readline, b''):
+        print("ligne", ligne)
+        if not ligne:
+            break
+        if ligne.startswith("Serveur prêt sur port :"):
+            port = int(ligne.split(":")[1])
+            break
+    return p, port
 
 
-context = {"serveur": None}
+type_context = TypedDict("type_context", {"serveur": Optional[int]})
+context: type_context = {"serveur": None}
 
 
 def changer_context(port: int):
@@ -75,15 +104,17 @@ def obtenir_context() -> Optional[int]:
 
 class Serveur(object):
 
-    def __init__(soimême, port=5000, autoinstaller=True):
+    def __init__(soimême, port=None, autoinstaller=True, exe: TypeExe = "constl-ws"):
         soimême.port = port
         soimême.autoinstaller = autoinstaller
+        soimême.exe = exe
 
         soimême.serveur: Optional[subprocess.Popen] = None
 
     def __enter__(soimême):
         changer_context(soimême.port)
-        soimême.serveur = lancer_serveur(soimême.port, soimême.autoinstaller)
+        soimême.serveur, soimême.port = lancer_serveur(soimême.port, soimême.autoinstaller, soimême.exe)
+        return soimême
 
     def __exit__(soimême, exc_type, exc_val, exc_tb):
         effacer_context()
