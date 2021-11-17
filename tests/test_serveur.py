@@ -13,6 +13,12 @@ class TestServeur(TestCase):
             port_contexte = obtenir_contexte()
             soimême.assertEqual(port_contexte, port_serveur)
 
+    async def test_erreur_deux_serveurs(soimême):
+        with soimême.assertRaises(ConnectionError):
+            with Serveur():
+                with Serveur():
+                    pass
+
     async def test_avec_contexte(soimême):
         port_serveur = 5005
         with Serveur(port_serveur):
