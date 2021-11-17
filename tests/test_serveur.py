@@ -1,22 +1,27 @@
 from unittest import TestCase
 
 from constellationPy.client import ouvrir_client
-from constellationPy.serveur import obtenir_context
+from constellationPy.serveur import obtenir_contexte
 from tests.ressources.faux_serveur import Serveur
-
-
-# import semantic_version as sv
 
 
 class TestServeur(TestCase):
 
     async def test_détecter_port(soimême):
-        with Serveur(5001):
-            port = obtenir_context()
-            soimême.assertEqual(port, 5001)
+        port_serveur = 5005
+        with Serveur(port_serveur):
+            port_contexte = obtenir_contexte()
+            soimême.assertEqual(port_contexte, port_serveur)
 
-    async def test_avec_context(soimême):
-        with Serveur(5000):
+    async def test_avec_contexte(soimême):
+        port_serveur = 5005
+        with Serveur(port_serveur):
             async with ouvrir_client() as client:
-                version = client.obtVersion()
-                sv.SimpleSpec(version)
+                port_client = client.port
+                soimême.assertEqual(port_client, port_serveur)
+
+    async def test_trouver_port_libre(soimême):
+        with Serveur() as serveur:
+            port_serveur = serveur.port
+            port_contexte = obtenir_contexte()
+            soimême.assertEqual(port_serveur, port_contexte)
