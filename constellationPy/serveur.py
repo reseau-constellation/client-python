@@ -113,7 +113,7 @@ context: type_context = {"port_serveur": None}
 
 def changer_contexte(port: int):
     if context["port_serveur"] is not None:
-        raise RuntimeError("On ne peut avoir qu'un seule serveur en contexte à la fois.")
+        raise ConnectionError("On ne peut avoir qu'un seule serveur en contexte à la fois.")
 
     context["port_serveur"] = port
 

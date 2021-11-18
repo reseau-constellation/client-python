@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from typing import Any, Union
+from typing import Any
 from typing import TYPE_CHECKING
 
 import trio
 
 if TYPE_CHECKING:
-    from constellationPy import Client
+    pass
 
 
 def à_chameau(text: str) -> str:
@@ -22,16 +22,16 @@ def fais_rien() -> None:
     pass
 
 
-async def une_fois(f_async, pouponnière: Union[trio.Nursery, Client]) -> Any:
-    if isinstance(pouponnière, Client):
-        pouponnière = Client.pouponnière
+async def une_fois(f_suivre, pouponnière: trio.Nursery) -> Any:
     canal_envoie, canal_réception = trio.open_memory_channel(0)
 
     async def f_réception(résultat):
         async with canal_envoie:
             await canal_envoie.send(résultat)
 
-    pouponnière.start_soon(f_async, f_réception)
-    with canal_réception:
+    f_oublier = (await pouponnière.start(f_suivre, f_réception)).cancel
+
+    async with canal_réception:
         async for message in canal_réception:
+            f_oublier()
             return message

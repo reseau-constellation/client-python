@@ -1,27 +1,83 @@
 import json
 import sys
+import uuid
 
 import click
 import trio
 from click_default_group import DefaultGroup
 from trio_websocket import serve_websocket, ConnectionClosed
 
+_données = {}
+
+
+def erreur_fonction_non_définie(message):
+    return {
+        "type": "erreur",
+        "id": message["id"],
+        "erreur": f"Fonction `Client.{'.'.join(message['fonction'])}()` non définie"
+    }
+
 
 async def traiter_message(message):
     message = json.loads(message)
     type_ = message["type"]
-    id_ = message["id"]
 
-    if type_ == "suivre":
-        pass
+    if type_ == "init":
+        return {
+            "type": "prêt"
+        }
+    elif type_ == "suivre":
+        fonction = tuple(message["fonction"])
+        if fonction == ("tableaux", "suivreDonnées"):
+            async def f(canal_envoyer, task_status=trio.TASK_STATUS_IGNORED):
+                with trio.CancelScope() as _context:
+                    task_status.started(_context)
+                    async with canal_envoyer:
+                        await canal_envoyer
+            annuler = pouponnière.start(f, canal_envoyer)
+        else:
+            return erreur_fonction_non_définie(message)
+        return {
+            "type": "suivrePrêt",
+            "id": message["id"]
+        }
+    elif type_ == "oublier":
+        id_ = message["id"]
+        if id_ in fonctions_oublier:
+            f = fonctions_oublier.pop(id_)
+            f()
     elif type_ == "action":
+        fonction = tuple(message["fonction"])
+        if fonction == ("obtIdOrbite",):
+            résultat = "1234567890"
+        elif fonction == ("ceciEstUnTest", "deSousModule"):
+            résultat = "C'est beau"
+        elif fonction == ("bds", "créerBd") \
+                or fonction == ("bds", "ajouterTableauBd") \
+                or fonction == ("variables", "créerVariable"):
+            résultat = "orbitdb/zdpu..." + str(uuid.uuid4())
+        elif fonction == ("tableaux", "ajouterColonneTableau"):
+            résultat = str(uuid.uuid4())
+        elif fonction == ("tableaux", "ajouterÉlément"):
+            id_tableau, élément = message["args"]
+            élément["id"] = str(uuid.uuid4())
+            if id_tableau not in _données:
+                _données[id_tableau] = []
+            _données[id_tableau] += [élément]
+            résultat = élément["id"]
+        else:
+            return erreur_fonction_non_définie(message)
         return {
             "type": "action",
-            "id": id_,
-            "résultat": "Je suis un résultat",
+            "id": message["id"],
+            "résultat": résultat,
         }
     else:
-        raise ValueError(f"Type `{type_}` inconnu.")
+        raise {
+            "type": "action",
+            "id": message["id"] if "id" in message else None,
+            "résultat": f"Type `{type_}` inconnu.",
+        }
 
 
 async def serveur(request):
@@ -30,7 +86,7 @@ async def serveur(request):
         try:
             message = await ws.get_message()
             réponse = await traiter_message(message)
-            await ws.send_message(réponse)
+            await ws.send_message(json.dumps(réponse))
         except ConnectionClosed:
             break
 
@@ -46,7 +102,7 @@ def cli():
 
 
 @cli.command("lancer")
-@click.option('--port', default=None)
+@click.option("-p", '--port', default=None)
 @click.option("-v", '--version/--sans-version', default=False)
 def lancer(port, version):
     if version:

@@ -8,7 +8,7 @@ from uuid import uuid4
 import trio
 import trio_websocket as tw
 
-from .serveur import obtenir_context
+from .serveur import obtenir_contexte
 from .utils import à_chameau
 
 
@@ -19,6 +19,7 @@ async def ouvrir_client(port: Optional[int] = None):
         async with Client(pouponnière, port) as client:
             await client.connecter()
             yield client
+            print("On a terminé")
 
 
 ErreurClientNonInitialisé = trio.ClosedResourceError(
@@ -53,6 +54,19 @@ class Client(trio.abc.AsyncResource):
         soimême._context_annuler_écoute: Optional[trio.CancelScope] = None
 
         soimême.erreurs: List[str] = []
+
+    @property
+    def port(soimême) -> int:
+
+        # trouver le port
+        port = soimême._port or soimême._client_original._port or obtenir_contexte()
+
+        if port is None:
+            raise ValueError(
+                "Vous devez ou bien lancer `Client` de l'intérieur d'un bloc `with Serveur()...`, "
+                "ou bien spécifier le numéro de port lors de son instantiation : `Client(port=5123)`."
+            )
+        return port
 
     @property
     def connexion(soimême) -> tw.WebSocketConnection:
@@ -92,17 +106,9 @@ class Client(trio.abc.AsyncResource):
         # établir le canal pour les erreurs éventuelles
         soimême._canal_erreurs = canal_erreurs
 
-        # trouver le port
-        port = soimême._port or soimême._client_original._port or obtenir_context()
-        if port is None:
-            raise ValueError(
-                "Vous devez ou bien lancer `Client` de l'intérieur d'un bloc `with Serveur()...`, "
-                "ou bien spécifier le numéro de port lors de son instantiation."
-            )
-        url = f"ws://localhost:{port}"
-
         # établir la connexion
-        soimême.connexion = await tw.open_websocket_url(url).__aenter__()
+        url = f"ws://localhost:{soimême.port}"
+        soimême.connexion = await tw.connect_websocket_url(soimême.pouponnière, url)
 
         # démarrer l'écoute
         soimême.canaux = trio.open_memory_channel(0)
@@ -112,6 +118,7 @@ class Client(trio.abc.AsyncResource):
         soimême.pouponnière.start_soon(soimême._envoyer_au_port, message_init)
 
     async def aclose(soimême):
+        print("On ferme tout")
         if soimême is not soimême._client_original:
             return
 
@@ -125,28 +132,30 @@ class Client(trio.abc.AsyncResource):
     async def _écouter(soimême, task_status=trio.TASK_STATUS_IGNORED):
         with trio.CancelScope() as _context:
             task_status.started(_context)
-            async with soimême.canal_envoie.clone() as canal_envoie:
+            async with soimême.canal_envoie as canal_envoie:
                 while True:
-                    message = await soimême.connexion.get_message()
+                    try:
+                        message = await soimême.connexion.get_message()
+                    except tw.ConnectionClosed:
+                        break
                     m_json = json.loads(message)
+                    print("Message reçu : ", m_json)
                     try:
                         type_ = m_json["type"]
-                        id_ = m_json["id"]
 
                         if type_ == "prêt":
                             await soimême._ipa_activée()
 
                         elif type_ == "suivre":
-                            m = {"id": id_, "résultat": m_json["données"]}
-                            canal_envoie.send(m)
+                            m = {"id": m_json["id"], "résultat": m_json["données"]}
+                            await canal_envoie.send(json.dumps(m))
 
                         elif type_ == "suivrePrêt":
-                            m = {"id": id_}
-                            canal_envoie.send(json.dumps(m))
+                            m = {"id": m_json["id"]}
+                            await canal_envoie.send(json.dumps(m))
 
                         elif type_ == "action":
-                            m = {"id": id_, "résultat": m_json["résultat"]}
-                            canal_envoie.send(json.dumps(m))
+                            await canal_envoie.send(json.dumps(m_json))
 
                         elif type_ == "erreur":
                             await soimême._erreur(m_json["erreur"])
@@ -155,6 +164,7 @@ class Client(trio.abc.AsyncResource):
                             await soimême._erreur(f"Type inconnu {type_} dans message {m_json}")
 
                     except Exception as e:
+                        print("Erreur !", str(e))
                         await soimême._erreur(str(e))
 
     async def _erreur(soimême, e: str) -> None:
@@ -165,20 +175,27 @@ class Client(trio.abc.AsyncResource):
             m = {"erreur": e}
             await soimême.canal_erreurs.send(json.dumps(m))
         else:
-            raise RuntimeError(e)
+            if e.endswith("non définie"):
+                raise AttributeError(e)
+            else:
+                raise RuntimeError(e)
 
     async def _envoyer_message(soimême, message: Dict) -> None:
+        print("envoyer message")
         if soimême._client_original._ipa_prêt:
+            print("le client était prêt")
             await soimême._envoyer_au_port(message)
         else:
+            print("on attendra que le client soit prêt")
             soimême._client_original._messages_en_attente.append(message)
 
     async def _envoyer_au_port(soimême, message: Dict):
-        # print(message)
+        print("message pour le port", message)
         await soimême.connexion.send_message(json.dumps(message))
+        print("message envoyé au port")
 
     async def _ipa_activée(soimême) -> None:
-
+        print("IPA activée")
         # Sauter cette fonction pour tous sauf le client de base
         if soimême is not soimême._client_original:
             return
@@ -201,9 +218,18 @@ class Client(trio.abc.AsyncResource):
             "fonction": adresse_fonction,
             "args": liste_args,
         }
-
         await soimême._envoyer_message(message)
-        val = await soimême._attendre_message(id_)
+        print("On attend le résultat de : ", message)
+        val = await soimême._attendre_message(id_, soimême.canal_réception.clone())
+        if not val:
+            raise ConnectionError(
+                "Le serveur local Constellation semble être en grève. \n"
+                "Si les négotiations n'aboutissent pas, n'hésitez pas à "
+                "nous demander de l'aide :\n"
+                "https://github.com/reseau-constellation/serveur-ws/issues"
+            )
+        if val["type"] == "erreur":
+            raise ChildProcessError(val["erreur"])
 
         return val["résultat"]
 
@@ -231,9 +257,9 @@ class Client(trio.abc.AsyncResource):
 
         # https://stackoverflow.com/questions/60674136/python-how-to-cancel-a-specific-task-spawned-by-a-nursery-in-python-trio
         # https://trio.readthedocs.io/en/stable/reference-core.html#trio.CancelScope
-        async def _suiveur(canal):
+        async def _suiveur(canal, task_status=trio.TASK_STATUS_IGNORED):
             with trio.CancelScope() as _context:
-                trio.TASK_STATUS_IGNORED.started(_context)
+                task_status.started(_context)
                 async with canal:
                     async for val in canal:
                         if val["id"] == id_:
@@ -251,14 +277,18 @@ class Client(trio.abc.AsyncResource):
             soimême.pouponnière.start_soon(soimême._envoyer_message(message_oublier))
             context.cancel()
 
-        await soimême._attendre_message(id_)
+        await soimême._attendre_message(id_, soimême.canal_réception.clone())
         return f_oublier
 
-    async def _attendre_message(soimême, id_: str):
-        async with soimême.canal_réception.clone() as canal_réception:
+    @staticmethod
+    async def _attendre_message(id_: str, canal_réception):
+        print("On attend le message : ", id_)
+        async with canal_réception:
             async for val in canal_réception:
-                if val["id"] == id_:
-                    return val
+                message = json.loads(val)
+                print("On a reçu un message : ", message)
+                if message["id"] == id_:
+                    return message
 
     async def __call__(
             soimême,
@@ -281,6 +311,6 @@ class Client(trio.abc.AsyncResource):
     def __getattr__(soimême, item):
         return Client(
             soimême.pouponnière,
-            _client_original=soimême,
+            _client_original=soimême._client_original,
             _liste_atributs=soimême._liste_atributs + [à_chameau(item)]
         )

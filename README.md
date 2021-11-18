@@ -134,7 +134,6 @@ with Serveur():
     client = ClientSync()
 
     mes_données = client.tableaux.suivreDonnées(idTableau, fais_rien)
-
 ```
 
 ### IPA asyncrone
@@ -179,9 +178,14 @@ from constellationPy import Serveur, ouvrir_client, une_fois
 idTableau = "/orbitdb/zdpu..."
 with Serveur():
     async with ouvrir_client() as client:
+      
+        # On doit définir une fonction auxiliaire que ne prend que la fonction de suivi
+        # en tant qu'argument
         async def f_données(f):
             return await client.tableaux.suivreDonnées(idTableau, f)
         
+        # La fonction `une_fois` appellera `f_données`, attendra le premier résultat,
+        # et nous renverra celui-ci.
         données = await une_fois(f_données, client)
         
         print(données)
@@ -260,3 +264,8 @@ async def principale():
 
 trio.run(principale)
 ```
+
+Vous pouvez aussi initialiser `Client` avec un canal `trio` pour recevoir les erreurs. Si le client
+ou le serveur encontre une erreur, celle-ci sera envoyée au canal erreur au lieu de soulever une
+erreur et d'arrêter exécution du programme. Cette option peut être utile lorsque vous ne voulez pas
+qu'une erreur sur une requête arrête toute l'exécution du logiciel.

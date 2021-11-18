@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "constellationPy"
 version = "0.1.0"
-description = ""
-authors = ["julienmalard <julien.malard@mail.mcgill.ca>"]
+description = "Client Python pour le réseau Constellation."
+authors = ["Julien Jean Malard-Adam <julien.malard@mail.mcgill.ca>"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
