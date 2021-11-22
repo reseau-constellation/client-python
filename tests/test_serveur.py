@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from constellationPy.client import ouvrir_client
 from constellationPy.serveur import obtenir_contexte
-from tests.ressources.faux_serveur import Serveur
+from .utils import Serveur
 
 
 class TestServeur(TestCase):

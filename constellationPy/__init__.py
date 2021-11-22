@@ -1,7 +1,7 @@
 import pkg_resources
 
 from .client import ouvrir_client, Client
-from .serveur import Serveur, lancer_serveur
+from .serveur import Serveur, lancer_serveur, assurer_constellation_installée
 from .sync import ClientSync
 from .utils import fais_rien, une_fois
 

@@ -19,15 +19,16 @@ class ClientSync:
     def __call__(soimême, *args):
 
         fonction_suivi = soimême._liste_atributs[-1].startswith("suivre")
-        i_arg_fonction = next(i for i, é in enumerate(args) if callable(é))
 
         async def f_async():
             async with ouvrir_client() as client:
                 f_client = client
                 for x in soimême._liste_atributs:
-                    f_client = getattr(client, x)
+                    f_client = getattr(f_client, x)
 
                 if fonction_suivi:
+                    i_arg_fonction = next(i for i, é in enumerate(args) if callable(é))
+
                     async def f_pour_une_fois(f):
                         liste_args = list(args)
                         liste_args[i_arg_fonction] = f

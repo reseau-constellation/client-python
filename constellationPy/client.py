@@ -9,7 +9,7 @@ import trio
 import trio_websocket as tw
 
 from .serveur import obtenir_contexte
-from .utils import à_chameau
+from .utils import à_chameau, une_fois
 
 
 # Idée de https://stackoverflow.com/questions/48282841/in-trio-how-can-i-have-a-background-task-that-lives-as-long-as-my-object-does
@@ -140,42 +140,42 @@ class Client(trio.abc.AsyncResource):
                         break
                     m_json = json.loads(message)
                     print("Message reçu : ", m_json)
-                    try:
-                        type_ = m_json["type"]
+                    type_ = m_json["type"]
 
-                        if type_ == "prêt":
-                            await soimême._ipa_activée()
+                    if type_ == "prêt":
+                        await soimême._ipa_activée()
 
-                        elif type_ == "suivre":
-                            m = {"id": m_json["id"], "résultat": m_json["données"]}
-                            await canal_envoie.send(json.dumps(m))
+                    elif type_ == "suivre":
+                        m = {"id": m_json["id"], "résultat": m_json["données"]}
+                        await canal_envoie.send(json.dumps(m))
 
-                        elif type_ == "suivrePrêt":
-                            m = {"id": m_json["id"]}
-                            await canal_envoie.send(json.dumps(m))
+                    elif type_ == "suivrePrêt":
+                        m = {"id": m_json["id"]}
+                        await canal_envoie.send(json.dumps(m))
 
-                        elif type_ == "action":
-                            await canal_envoie.send(json.dumps(m_json))
+                    elif type_ == "action":
+                        await canal_envoie.send(json.dumps(m_json))
 
-                        elif type_ == "erreur":
-                            await soimême._erreur(m_json["erreur"])
+                    elif type_ == "erreur":
+                        await canal_envoie.send(json.dumps(m_json))
+                        # On rapporte ici uniquement les erreurs génériques (non spécifiques à une requète)
+                        if m_json["id"] and soimême.canal_erreurs:
+                            m = {"erreur": m_json["erreur"]}
+                            print("erreure envoyée : ", m)
+                            await soimême.canal_erreurs.send(json.dumps(m))
 
-                        else:
-                            await soimême._erreur(f"Type inconnu {type_} dans message {m_json}")
+                        soimême._erreur(m_json["erreur"])
 
-                    except Exception as e:
-                        print("Erreur !", str(e))
-                        await soimême._erreur(str(e))
+                    else:
+                        soimême._erreur(f"Type inconnu {type_} dans message {m_json}")
 
-    async def _erreur(soimême, e: str) -> None:
+    def _erreur(soimême, e: str) -> None:
+        print("erreur reçue : ", e)
         soimême.erreurs.insert(0, e)
 
         # On envoie les erreurs au canal s'il existe. Sinon, on arrête l'exécution.
-        if soimême.canal_erreurs:
-            m = {"erreur": e}
-            await soimême.canal_erreurs.send(json.dumps(m))
-        else:
-            if e.endswith("non définie"):
+        if not soimême.canal_erreurs:
+            if isinstance(e, str) and e.endswith("non définie"):
                 raise AttributeError(e)
             else:
                 raise RuntimeError(e)
@@ -222,16 +222,15 @@ class Client(trio.abc.AsyncResource):
         print("On attend le résultat de : ", message)
         val = await soimême._attendre_message(id_, soimême.canal_réception.clone())
         if not val:
-            raise ConnectionError(
+            soimême._erreur(
                 "Le serveur local Constellation semble être en grève. \n"
                 "Si les négotiations n'aboutissent pas, n'hésitez pas à "
                 "nous demander de l'aide :\n"
                 "https://github.com/reseau-constellation/serveur-ws/issues"
             )
-        if val["type"] == "erreur":
-            raise ChildProcessError(val["erreur"])
 
-        return val["résultat"]
+        if val["type"] == "action":
+            return val["résultat"]
 
     async def _appeler_fonction_suivre(
             soimême,
@@ -244,7 +243,7 @@ class Client(trio.abc.AsyncResource):
         f = liste_args[i_arg_fonction]
         args_ = [a for a in liste_args if not callable(a)]
         if len(args_) != len(liste_args) - 1:
-            await soimême._erreur("Plus d'un argument est une fonction.")
+            soimême._erreur("Plus d'un argument est une fonction.")
             return lambda: None
 
         message = {
@@ -262,6 +261,8 @@ class Client(trio.abc.AsyncResource):
                 task_status.started(_context)
                 async with canal:
                     async for val in canal:
+                        val = json.loads(val)
+                        print("val", val)
                         if val["id"] == id_:
                             await f(val["résultat"])
 
@@ -280,15 +281,28 @@ class Client(trio.abc.AsyncResource):
         await soimême._attendre_message(id_, soimême.canal_réception.clone())
         return f_oublier
 
-    @staticmethod
-    async def _attendre_message(id_: str, canal_réception):
+    async def _attendre_message(soimême, id_: str, canal_réception):
         print("On attend le message : ", id_)
         async with canal_réception:
             async for val in canal_réception:
                 message = json.loads(val)
                 print("On a reçu un message : ", message)
                 if message["id"] == id_:
+                    if message["type"] == "erreur":
+                        soimême._erreur(message["erreur"])
                     return message
+
+    async def obt_données_tableau(soimême, id_tableau: str):
+        async def f_async(f):
+            return await soimême.tableaux.suivre_données(id_tableau, f)
+
+        return await une_fois(f_async, soimême.pouponnière)
+
+    async def obt_données_réseau(soimême, motclef_unique: str, nom_unique_tableau: str):
+        async def f_async(f):
+            return await soimême.réseau.suivre_données(motclef_unique, nom_unique_tableau, f)
+
+        return await une_fois(f_async, soimême.pouponnière)
 
     async def __call__(
             soimême,

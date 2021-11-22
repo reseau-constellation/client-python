@@ -42,7 +42,7 @@ def _installer_nodejs():
     raise OSError(système_opératoire)
 
 
-def _assurer_constellation_installée():
+def assurer_constellation_installée():
     version_constellation = obt_version_constellation()
     if not version_constellation:
 
@@ -69,6 +69,11 @@ def _assurer_constellation_installée():
                     f"Erreur d'installation de Constellation :\n\t{résultat_constellation.stderr.decode()}"
                 )
 
+    version = obt_version_constellation()
+
+    if not version:
+        raise ChildProcessError("Erreur d'installation de Constellation.")
+
 
 def obt_version_constellation(exe: TypeExe = "constl") -> Optional[str]:
     return _obt_version(exe)
@@ -87,7 +92,7 @@ def lancer_serveur(port=None, autoinstaller=True, exe: TypeExe = "constl") -> Tu
         exe = [exe]
 
     if autoinstaller:
-        _assurer_constellation_installée()
+        assurer_constellation_installée()
     version = obt_version_constellation(exe)
 
     if not version:
