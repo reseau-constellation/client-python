@@ -28,6 +28,12 @@ Cependant, nous comprenons bien que la grande majorité des utilisatrices et uti
 ce qu'est la programmation asyncrone, ni aucun goût ou raison de l'apprendre. C'est pour cela que ConstellationPy vous
 offre également un IPA syncrone.
 
+> Vous ne savez pas ce que « syncrone » ou « asyncrone » veulent dire ? Ne vous en faites pas
+> et utilisez l'IPA syncrone. « Syncrone » est le terme technique pour le style de code « normal » 
+> Python que vous connaissez bien. Si vous voulez en savoir plus, 
+> [voici](https://adrienjoly.com/cours-nodejs/sync-vs-async.html) une belle présentation de la différence
+> entre les deux (en JavaScript).
+
 Attention ! L'IPA syncrone fonctionne bien pour des petites tâches (p. ex., récupérer un ou deux jeux de données), mais
 l'IPA asyncrone est beaucoup plus efficace si vous traitez de grands nombre de données ou de requètes à Constellation.
 Si vous avez besoin d'accéder beaucoup de différentes bases de données Constellation, peut-être que ça vaudrait la
@@ -122,7 +128,7 @@ with Serveur():
     print(résultatChameau == résultat_kebab)
 ```
 
-Vous pouvez également accéder les sous-objets de Constellation (`compte`, `bds`, `tableaux`, et ainsi de suite) :
+Vous pouvez également accéder les sous-objets de Constellation (`profil`, `bds`, `tableaux`, et ainsi de suite) :
 
 ```python
 from constellationPy import ClientSync, Serveur
@@ -130,7 +136,7 @@ from constellationPy import ClientSync, Serveur
 with Serveur():
     client = ClientSync()
 
-    client.compte.sauvegarderNom("fr", "moi !")
+    client.profil.sauvegarderNom("fr", "moi !")
     client.bds.créerBd("ODbl-1.0")
 
 ```
@@ -159,7 +165,7 @@ with Serveur():
   créer des ennuis. Un `client.bds.créerBd("ODbl-1.0")` tout simple va faire l'affaire. Si ça vous 
   gêne vraiment, dites-nous le et on y travaillera.
 * Avec le client syncrone, les fonctions de suivi (voir ci-dessous) doivent être appellées avec une fonction vide (p.
-  ex., `lambda: pass`) à la place de la fonction de suivi.
+  ex., `lambda: pass` ou bien tout simplemen `fais_rien`) à la place de la fonction de suivi.
 * Vous vous demandez où trouver tous ces drôles de « id tableau » pour les bases de données qui vous intéressent ? Il
   s'agit de l'identifiant unique d'un tableau ou d'une base de données, que vous pouvez récupérer lorsque vous créez la
   base de données, ou bien visuellement avec

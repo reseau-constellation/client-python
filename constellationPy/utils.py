@@ -18,6 +18,10 @@ def à_chameau(text: str) -> str:
     return s[0] + ''.join(i.capitalize() for i in s[1:])
 
 
+def à_kebab(text: str) -> str:
+    return ''.join(['_' + x.lower() if x.isupper() else x for x in text]).lstrip('_')
+
+
 def fais_rien() -> None:
     pass
 

@@ -1,7 +1,7 @@
 import unittest
 
 from constellationPy import ClientSync
-from .utils import Serveur, VRAI_SERVEUR
+from tests.utils import Serveur, VRAI_SERVEUR
 
 
 class TestSync(unittest.TestCase):
@@ -31,7 +31,6 @@ class TestSync(unittest.TestCase):
     def test_suivre_sync(soimême):
         pass
 
-
     def test_obt_données_tableau(soimême):
         client = ClientSync()
         données = client.obt_données_tableau("orbitdb/...")
@@ -40,6 +39,7 @@ class TestSync(unittest.TestCase):
     def test_obt_données_réseau(soimême):
         client = ClientSync()
         données = client.obt_données_réseau("clef unique bd", "clef unique tableau")
+        print(données)
         soimême.assertEqual(expected, result)
 
     def tearDown(soimême) -> None:

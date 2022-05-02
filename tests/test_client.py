@@ -5,7 +5,7 @@ from unittest import TestCase
 import trio
 
 from constellationPy.client import ouvrir_client, Client
-from .utils import Serveur, VRAI_SERVEUR
+from tests.utils import Serveur, VRAI_SERVEUR
 
 
 class TestClient(TestCase):

@@ -9,7 +9,7 @@ import trio
 import trio_websocket as tw
 
 from .serveur import obtenir_contexte
-from .utils import à_chameau, une_fois
+from .utils import à_chameau, à_kebab, une_fois
 
 
 # Idée de https://stackoverflow.com/questions/48282841/in-trio-how-can-i-have-a-background-task-that-lives-as-long-as-my-object-does
@@ -39,7 +39,7 @@ class Client(trio.abc.AsyncResource):
             pouponnière,
             port: Optional[int] = None,
             _client_original: Optional[Client] = None,
-            _liste_atributs: Optional[List[str]] = None
+            _liste_attributs: Optional[List[str]] = None
     ):
         soimême.pouponnière = pouponnière
         soimême._client_original = _client_original or soimême
@@ -50,7 +50,7 @@ class Client(trio.abc.AsyncResource):
         soimême._canal_erreurs: Optional[trio.MemorySendChannel] = None
         soimême._messages_en_attente: List[Dict] = []
         soimême._ipa_prêt = False
-        soimême._liste_atributs = _liste_atributs or []
+        soimême._liste_attributs = _liste_attributs or []
         soimême._context_annuler_écoute: Optional[trio.CancelScope] = None
 
         soimême.erreurs: List[str] = []
@@ -312,19 +312,22 @@ class Client(trio.abc.AsyncResource):
         id_ = str(uuid4())
         liste_args = list(args)
         i_arg_fonction = next((i for i, é in enumerate(liste_args) if callable(é)), None)
+        
+        adresse_fonction = [à_chameau(x) for x in soimême._liste_attributs]
 
         if i_arg_fonction is not None:
             return await soimême._appeler_fonction_suivre(
-                id_, adresse_fonction=soimême._liste_atributs, liste_args=liste_args, i_arg_fonction=i_arg_fonction
+                id_, adresse_fonction=adresse_fonction, liste_args=liste_args, i_arg_fonction=i_arg_fonction
             )
         else:
             return await soimême._appeler_fonction_action(
-                id_, adresse_fonction=soimême._liste_atributs, liste_args=liste_args
+                id_, adresse_fonction=adresse_fonction, liste_args=liste_args
             )
 
     def __getattr__(soimême, item):
+        print("ici", item)
         return Client(
             soimême.pouponnière,
             _client_original=soimême._client_original,
-            _liste_atributs=soimême._liste_atributs + [à_chameau(item)]
+            _liste_attributs=soimême._liste_attributs + [à_kebab(item)]
         )

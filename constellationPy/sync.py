@@ -3,27 +3,25 @@ from typing import Optional, List
 import trio
 
 from .client import ouvrir_client
-from .utils import à_chameau, une_fois
+from .utils import à_kebab, une_fois
 
 
-class ClientSync:
-    def __init__(soimême, port: Optional[int] = None, _liste_atributs: Optional[List[str]] = None):
+class ClientSync(object):
+    def __init__(soimême, port: Optional[int] = None, _liste_attributs: Optional[List[str]] = None):
         soimême.port = port
-        soimême._liste_atributs = _liste_atributs or []
+        soimême._liste_attributs = _liste_attributs or []
 
     def __getattr__(soimême, item):
-        return ClientSync(
-            soimême.port, soimême._liste_atributs + [à_chameau(item)]
-        )
+        return ClientSync(soimême.port, soimême._liste_attributs + [à_kebab(item)])
 
     def __call__(soimême, *args):
-
-        fonction_suivi = soimême._liste_atributs[-1].startswith("suivre")
+        print(soimême._liste_attributs)
+        fonction_suivi = soimême._liste_attributs[-1].startswith("suivre")
 
         async def f_async():
             async with ouvrir_client() as client:
                 f_client = client
-                for x in soimême._liste_atributs:
+                for x in soimême._liste_attributs:
                     f_client = getattr(f_client, x)
 
                 if fonction_suivi:
