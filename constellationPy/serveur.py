@@ -32,7 +32,7 @@ def _obt_version(commande: Union[str, List[str]], arg="-v") -> Optional[str]:
         return
 
     if résultat.returncode == 0:
-        return résultat.stdout.decode()
+        return résultat.stdout.decode().replace("\r",'').replace("\n",'')
 
     print(f"Erreur serveur Constellation: {résultat}")
 
