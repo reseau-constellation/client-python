@@ -67,12 +67,14 @@ class TestClient(TestCase):
     async def test_obt_données_tableau(soimême):
         async with ouvrir_client() as client:
             données = await client.obt_données_tableau("orbitdb/...")
-        soimême.assertEqual(expected, result)
+        raise NotImplementedError
+        # soimême.assertEqual(expected, result)
 
     async def test_obt_données_réseau(soimême):
         async with ouvrir_client() as client:
             données = client.obt_données_réseau("clef unique bd", "clef unique tableau")
-        soimême.assertEqual(expected, result)
+        raise NotImplementedError
+        # soimême.assertEqual(expected, result)
 
     async def test_canal_erreurs(soimême):
 

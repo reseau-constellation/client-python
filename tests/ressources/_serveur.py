@@ -34,7 +34,7 @@ async def traiter_message(message):
                     task_status.started(_context)
                     async with canal_envoyer:
                         await canal_envoyer
-            annuler = pouponnière.start(f, canal_envoyer)
+            # annuler = pouponnière.start(f, canal_envoyer)
         else:
             return erreur_fonction_non_définie(message)
         return {
@@ -43,9 +43,9 @@ async def traiter_message(message):
         }
     elif type_ == "oublier":
         id_ = message["id"]
-        if id_ in fonctions_oublier:
-            f = fonctions_oublier.pop(id_)
-            f()
+        # if id_ in fonctions_oublier:
+        #     f = fonctions_oublier.pop(id_)
+        #     f()
     elif type_ == "action":
         fonction = tuple(message["fonction"])
         if fonction == ("obtIdOrbite",):
