@@ -35,14 +35,14 @@ class TestSync(unittest.TestCase):
         client = ClientSync()
         données = client.obt_données_tableau("orbitdb/...")
         raise NotImplementedError
-        soimême.assertEqual(expected, result)
+        # soimême.assertEqual(expected, result)
 
     def test_obt_données_réseau(soimême):
         client = ClientSync()
         données = client.obt_données_réseau("clef unique bd", "clef unique tableau")
         print(données)
         raise NotImplementedError
-        soimême.assertEqual(expected, result)
+        # soimême.assertEqual(expected, result)
 
     def tearDown(soimême) -> None:
         soimême.serveur.__exit__()
