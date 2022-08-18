@@ -7,7 +7,11 @@ import trio
 from click_default_group import DefaultGroup
 from trio_websocket import serve_websocket, ConnectionClosed
 
-from constellationPy.const import V_SERVEUR_NÉCESSAIRE
+try:
+    from constellationPy.const import V_SERVEUR_NÉCESSAIRE
+except ModuleNotFoundError:
+    # Pour tests sur Ubuntu... pas sûr pourquoi ça ne fonctionne pas...
+    V_SERVEUR_NÉCESSAIRE = "^0.1.0"
 
 _données = {}
 
