@@ -28,11 +28,13 @@ def _obt_version(commande: Union[str, List[str]], arg="-v") -> Optional[str]:
 
     try:
         résultat = subprocess.run([*commande, arg], capture_output=True)
-    except FileNotFoundError:
+        print("résultat", résultat)
+    except FileNotFoundError as e:
+        print("FileNotFoundError", e)
         return
 
     if résultat.returncode == 0:
-        return résultat.stdout.decode().replace("\r",'').replace("\n",'')
+        return résultat.stdout.decode().replace("\r", '').replace("\n", '')
 
     print(f"Erreur serveur Constellation: {résultat}")
 
