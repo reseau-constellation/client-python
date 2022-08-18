@@ -41,6 +41,7 @@ class TestClient(TestCase):
             async with ouvrir_client() as client:
                 await client.ce_module_nexiste_pas.ni_cette_fonction()
 
+    @unittest.skip
     async def test_suivre(soimême):
         canal_envoie, canal_réception = trio.open_memory_channel(0)
 
@@ -64,12 +65,14 @@ class TestClient(TestCase):
                     soimême.assertEqual(m, 123)
             oublier_données()
 
+    @unittest.skip
     async def test_obt_données_tableau(soimême):
         async with ouvrir_client() as client:
             données = await client.obt_données_tableau("orbitdb/...")
         raise NotImplementedError
         # soimême.assertEqual(expected, result)
 
+    @unittest.skip
     async def test_obt_données_réseau(soimême):
         async with ouvrir_client() as client:
             données = client.obt_données_réseau("clef unique bd", "clef unique tableau")

@@ -7,6 +7,8 @@ import trio
 from click_default_group import DefaultGroup
 from trio_websocket import serve_websocket, ConnectionClosed
 
+from constellationPy.const import V_SERVEUR_NÉCESSAIRE
+
 _données = {}
 
 
@@ -114,7 +116,7 @@ def v_constl():
 @click.option("-v", '--version/--sans-version', default=False)
 def lancer(port, version):
     if version:
-        écrire_à_stdout("0.4.0")
+        écrire_à_stdout(V_SERVEUR_NÉCESSAIRE.strip("^"))
         return
 
     async def main():

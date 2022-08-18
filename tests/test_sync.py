@@ -31,12 +31,14 @@ class TestSync(unittest.TestCase):
     def test_suivre_sync(soimême):
         pass
 
+    @unittest.skip
     def test_obt_données_tableau(soimême):
         client = ClientSync()
         données = client.obt_données_tableau("orbitdb/...")
         raise NotImplementedError
         # soimême.assertEqual(expected, result)
 
+    @unittest.skip
     def test_obt_données_réseau(soimême):
         client = ClientSync()
         données = client.obt_données_réseau("clef unique bd", "clef unique tableau")
