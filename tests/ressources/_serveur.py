@@ -102,14 +102,16 @@ def écrire_à_stdout(*message: str):
 def cli():
     pass
 
+
 @cli.command("v-constl")
 def v_constl():
-    print("ici")
     return "1.0.1"
+
 
 @cli.command("v-constl-obli")
 def v_constl():
     return "^1.0.0"
+
 
 @cli.command("lancer")
 @click.option("-p", '--port', default=None)

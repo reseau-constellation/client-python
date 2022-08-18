@@ -1,4 +1,5 @@
 import json
+import os
 import unittest
 from unittest import TestCase
 
@@ -11,6 +12,8 @@ from tests.utils import Serveur, VRAI_SERVEUR
 class TestClient(TestCase):
 
     def setUp(soimême) -> None:
+        VRAI_SERVEUR = os.getenv('VRAI_SERVEUR')
+        print("VRAI_SERVEUR", VRAI_SERVEUR)
         soimême.serveur = Serveur()
         soimême.serveur.__enter__()
 

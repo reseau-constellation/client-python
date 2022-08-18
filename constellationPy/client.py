@@ -323,7 +323,6 @@ class Client(trio.abc.AsyncResource):
             )
 
     def __getattr__(soimême, item):
-        print("ici", item)
         return Client(
             soimême.pouponnière,
             _client_original=soimême._client_original,

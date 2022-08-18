@@ -146,7 +146,7 @@ def lancer_serveur(port=None, autoinstaller=True, exe: TypeExe = "constl") -> Tu
     if autoinstaller:
         assurer_constellation_installée()
     version = obt_version_serveur_constellation(exe)
-
+    print("version", version, v_serveur_nécessaire)
     if not version_compatible(version, v_serveur_nécessaire):
         raise ChildProcessError(
             "Constellation doit être installée et à jour sur votre appareil. "
