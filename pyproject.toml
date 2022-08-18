@@ -12,6 +12,7 @@ trio = "^0.19.0"
 semantic-version = "^2.8.5"
 click = "^8.0.3"
 click-default-group = "^1.2.2"
+urllib3 = "^1.26.11"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"

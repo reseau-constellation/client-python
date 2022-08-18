@@ -158,7 +158,7 @@ class Client(trio.abc.AsyncResource):
 
                     elif type_ == "erreur":
                         await canal_envoie.send(json.dumps(m_json))
-                        # On rapporte ici uniquement les erreurs génériques (non spécifiques à une requète)
+                        # On rapporte ici uniquement les erreurs génériques (non spécifiques à une requête)
                         if m_json["id"] and soimême.canal_erreurs:
                             m = {"erreur": m_json["erreur"]}
                             print("erreure envoyée : ", m)
@@ -210,13 +210,13 @@ class Client(trio.abc.AsyncResource):
             soimême,
             id_: str,
             adresse_fonction: List[str],
-            liste_args: List[Any]
+            args: Dict[str, Any]
     ) -> Any:
         message = {
             "type": "action",
             "id": id_,
             "fonction": adresse_fonction,
-            "args": liste_args,
+            "args": args,
         }
         await soimême._envoyer_message(message)
         print("On attend le résultat de : ", message)
@@ -236,13 +236,13 @@ class Client(trio.abc.AsyncResource):
             soimême,
             id_: str,
             adresse_fonction: List[str],
-            liste_args: List[any],
-            i_arg_fonction: int
+            args: Dict[str, any],
+            nom_arg_fonction: str
     ) -> Callable[[], None]:
 
-        f = liste_args[i_arg_fonction]
-        args_ = [a for a in liste_args if not callable(a)]
-        if len(args_) != len(liste_args) - 1:
+        f = args[nom_arg_fonction]
+        args_ = [a for a in args.values() if not callable(a)]
+        if len(args_) != len(args) - 1:
             soimême._erreur("Plus d'un argument est une fonction.")
             return lambda: None
 
@@ -251,7 +251,7 @@ class Client(trio.abc.AsyncResource):
             "id": id_,
             "fonction": adresse_fonction,
             "args": args_,
-            "iArgFonction": i_arg_fonction
+            "nomArgFonction": nom_arg_fonction
         }
 
         # https://stackoverflow.com/questions/60674136/python-how-to-cancel-a-specific-task-spawned-by-a-nursery-in-python-trio
@@ -306,22 +306,20 @@ class Client(trio.abc.AsyncResource):
 
     async def __call__(
             soimême,
-            *args: Any
+            **argsmc: Any
     ) -> Union[Any, Callable[[], None]]:
 
         id_ = str(uuid4())
-        liste_args = list(args)
-        i_arg_fonction = next((i for i, é in enumerate(liste_args) if callable(é)), None)
-        
+        nom_arg_fonction = next((c for c, v in argsmc.items() if callable(v)), None)
         adresse_fonction = [à_chameau(x) for x in soimême._liste_attributs]
 
-        if i_arg_fonction is not None:
+        if nom_arg_fonction is not None:
             return await soimême._appeler_fonction_suivre(
-                id_, adresse_fonction=adresse_fonction, liste_args=liste_args, i_arg_fonction=i_arg_fonction
+                id_, adresse_fonction=adresse_fonction, args=argsmc, nom_arg_fonction=nom_arg_fonction
             )
         else:
             return await soimême._appeler_fonction_action(
-                id_, adresse_fonction=adresse_fonction, liste_args=liste_args
+                id_, adresse_fonction=adresse_fonction, args=argsmc
             )
 
     def __getattr__(soimême, item):

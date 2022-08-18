@@ -45,19 +45,19 @@ class TestClient(TestCase):
         canal_envoie, canal_réception = trio.open_memory_channel(0)
 
         async with ouvrir_client() as client:
-            id_bd = await client.bds.créerBd("ODBl-1.0")
-            id_tableau = await client.bds.ajouterTableauBd(id_bd)
+            id_bd = await client.bds.créerBd(licence="ODBl-1.0")
+            id_tableau = await client.bds.ajouterTableauBd(id_bd=id_bd)
 
-            id_var = await client.variables.créerVariable("numérique")
-            id_col = await client.tableaux.ajouterColonneTableau(id_tableau, id_var)
+            id_var = await client.variables.créerVariable(catégorie="numérique")
+            id_col = await client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_var=id_var)
 
             async def f_suivre_données(éléments):
                 async with canal_envoie:
                     if éléments:
                         await canal_envoie.send(éléments[0][id_col])
 
-            oublier_données = await client.tableaux.suivreDonnées(id_tableau, f_suivre_données)
-            await client.tableaux.ajouterÉlément(id_tableau, {id_col: 123})
+            oublier_données = await client.tableaux.suivreDonnées(id_tableau=id_tableau, f=f_suivre_données)
+            await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
 
             async with canal_réception:
                 async for m in canal_réception:

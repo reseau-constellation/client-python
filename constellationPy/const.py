@@ -1,0 +1,1 @@
+V_SERVEUR_NÉCESSAIRE = "^0.1.0"
