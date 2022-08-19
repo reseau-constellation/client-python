@@ -83,9 +83,9 @@ Note : pour installer Constellation pour la première fois, faites rouler le cod
 fois sur votre ordinateur :
 
 ```python
-from constellationPy import assurer_constellation_installée
+from constellationPy import mettre_constellation_à_jour
 
-assurer_constellation_installée()
+mettre_constellation_à_jour()
 ```
 
 Vous pourrez ensuite invoquer le serveur Constellation ainsi :

@@ -159,7 +159,7 @@ class Client(trio.abc.AsyncResource):
                     elif type_ == "erreur":
                         await canal_envoie.send(json.dumps(m_json))
                         # On rapporte ici uniquement les erreurs génériques (non spécifiques à une requête)
-                        if m_json["id"] and soimême.canal_erreurs:
+                        if "id" in m_json and soimême.canal_erreurs:
                             m = {"erreur": m_json["erreur"]}
                             print("erreure envoyée : ", m)
                             await soimême.canal_erreurs.send(json.dumps(m))
@@ -287,7 +287,7 @@ class Client(trio.abc.AsyncResource):
             async for val in canal_réception:
                 message = json.loads(val)
                 print("On a reçu un message : ", message)
-                if message["id"] == id_:
+                if "id" in message and message["id"] == id_:
                     if message["type"] == "erreur":
                         soimême._erreur(message["erreur"])
                     return message

@@ -109,12 +109,12 @@ def cli():
 
 @cli.command("v-constl")
 def v_constl():
-    return "1.0.1"
+    écrire_à_stdout("1.0.1")
 
 
 @cli.command("v-constl-obli")
 def v_constl():
-    return "^1.0.0"
+    écrire_à_stdout("^1.0.0")
 
 
 @cli.command("lancer")

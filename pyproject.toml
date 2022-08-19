@@ -13,6 +13,7 @@ semantic-version = "^2.8.5"
 click = "^8.0.3"
 click-default-group = "^1.2.2"
 urllib3 = "^1.26.11"
+appdirs = "^1.4.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"
