@@ -27,18 +27,18 @@ class TestSync(unittest.TestCase):
         with soimême.assertRaises(AttributeError):
             soimême.client.ce_module_nexiste_pas.ni_cette_fonction()
 
-    @unittest.skip
+    @unittest.skipIf(VRAI_SERVEUR, "Test uniquement pour le faux serveur")
     def test_suivre_sync(soimême):
         pass
 
-    @unittest.skip
+    @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur")
     def test_obt_données_tableau(soimême):
         client = ClientSync()
         données = client.obt_données_tableau("orbitdb/...")
         raise NotImplementedError
         # soimême.assertEqual(expected, result)
 
-    @unittest.skip
+    @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur")
     def test_obt_données_réseau(soimême):
         client = ClientSync()
         données = client.obt_données_réseau("clef unique bd", "clef unique tableau")

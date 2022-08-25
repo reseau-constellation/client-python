@@ -21,32 +21,32 @@ installé localement.
 
 ## Utilisation
 
-ConstellationPy est une librarie **asyncrone** basée sur [trio](https://trio.readthedocs.io). Étant donné que le serveur
-Constellation est fondamentallement asyncrone aussi, c'était la décision naturelle.
+ConstellationPy est une libraries **asynchrone** basée sur [trio](https://trio.readthedocs.io). Étant donné que le serveur
+Constellation est fondamentalement asynchrone aussi, c'était la décision naturelle.
 
 Cependant, nous comprenons bien que la grande majorité des utilisatrices et utilisateurs de Python n'ont aucune idée de
-ce qu'est la programmation asyncrone, ni aucun goût ou raison de l'apprendre. C'est pour cela que ConstellationPy vous
-offre également un IPA syncrone.
+ce qu'est la programmation asynchrone, ni aucun goût ou raison de l'apprendre. C'est pour cela que ConstellationPy vous
+offre également un IPA synchrone.
 
-> Vous ne savez pas ce que « syncrone » ou « asyncrone » veulent dire ? Ne vous en faites pas
-> et utilisez l'IPA syncrone. « Syncrone » est le terme technique pour le style de code « normal » 
+> Vous ne savez pas ce que « synchrone » ou « asynchrone » veulent dire ? Ne vous en faites pas
+> et utilisez l'IPA synchrone. « Synchrone » est le terme technique pour le style de code « normal » 
 > Python que vous connaissez bien. Si vous voulez en savoir plus, 
 > [voici](https://adrienjoly.com/cours-nodejs/sync-vs-async.html) une belle présentation de la différence
 > entre les deux (en JavaScript).
 
-Attention ! L'IPA syncrone fonctionne bien pour des petites tâches (p. ex., récupérer un ou deux jeux de données), mais
-l'IPA asyncrone est beaucoup plus efficace si vous traitez de grands nombre de données ou de requètes à Constellation.
+Attention ! L'IPA synchrone fonctionne bien pour des petites tâches (p. ex., récupérer un ou deux jeux de données), mais
+l'IPA asynchrone est beaucoup plus efficace si vous traitez de grands nombres de données ou de requêtes à Constellation.
 Si vous avez besoin d'accéder beaucoup de différentes bases de données Constellation, peut-être que ça vaudrait la
 peine, après tout,
 [d'apprendre](https://trio.readthedocs.io/en/stable/tutorial.html) comment utiliser ces drôles de `async` et `await` en
 Python.
 
-### IPA syncrone
+### IPA synchrone
 
 En premier lieu, nous devons lancer le serveur Constellation. C'est absolument nécessaire, à moins que vous n'aviez déjà
 lancé un serveur Constellation
 [manuellement](https://github.com/reseau-constellation/serveur-ws/blob/master/README.md#ligne-de-commande), lorsque, par
-exemple, vous voulez exécuter plusieurs codes Python qui utilisent Constellaltion en parallèle sans dupliquer le
+exemple, vous voulez exécuter plusieurs codes Python qui utilisent Constellation en parallèle sans dupliquer le
 serveur (oui, c'est bien possible) !
 
 Donc, on commence. La façon la plus sure, c'est d'utiliser un bloc `with`, car celui-ci fermera automatiquement le
@@ -75,7 +75,7 @@ le plus de connexions et de données il obtiendra.
 
 Vous pouvez donc lancer votre nœud local à l'aide de la ligne de commande. Vous pouvez utiliser
 n'importe quel port libre (ici 5001). Vous pouvez le laisser rouler aussi longtemps que vous voudrez,
-il y se syncronisera automatiquement avec le réseau Constellation.
+il y se synchronisera automatiquement avec le réseau Constellation.
 Tout client pyConstellation que vous lancerez en même temps obtiendra ainsi les données les plus
 à jour disponibles.
 
@@ -136,8 +136,8 @@ from constellationPy import ClientSync, Serveur
 with Serveur():
     client = ClientSync()
 
-    client.profil.sauvegarderNom("fr", "moi !")
-    client.bds.créerBd("ODbl-1.0")
+    client.profil.sauvegarderNom(langue="fr", nom="moi !")
+    client.bds.créerBd(licence="ODbl-1.0")
 
 ```
 
@@ -153,7 +153,7 @@ id_tableau = "/orbitdb/zdpu..."
 
 with Serveur():
     client = ClientSync()
-    données = client.obt_données_tableau(id_tableau)
+    données = client.obt_données_tableau(idTableau=id_tableau)
 ```
 
 **Quelques points importants**
@@ -161,11 +161,12 @@ with Serveur():
 * Les fonctions plus obscures qui prennent plus qu'une autre fonction comme argument (p.
   ex. `client.suivreBdDeFonction`) ne fonctionnent pas avec le client Python. Ne vous en faites pas. Elles sont obscures
   pour une raison. Laissez-les en paix. Vous avez amplement de quoi vous amuser avec le reste de l'IPA.
-* N'utilisez **pas** les paramètres nommés (p. ex., `client.bds.créerBd(licence="ODbl-1.0")`). Ça va
-  créer des ennuis. Un `client.bds.créerBd("ODbl-1.0")` tout simple va faire l'affaire. Si ça vous 
-  gêne vraiment, dites-nous le et on y travaillera.
-* Avec le client syncrone, les fonctions de suivi (voir ci-dessous) doivent être appellées avec une fonction vide (p.
-  ex., `lambda: pass` ou bien tout simplemen `fais_rien`) à la place de la fonction de suivi.
+* Vous **devez** utiliser des paramètres nommés (p. ex., `client.bds.créerBd(licence="ODbl-1.0")`). Si vous ne le
+  faites pas (`client.bds.créerBd("ODbl-1.0")`), ça va vous créer des ennuis. Les noms des paramètres doivent être
+  les mêmes que dans l'IPA Constellation JavaScript (p. ex., l'exemple précédent provient de la version JavaSCript 
+  `client.bds.créerBd({ licence: "ODbl-1.0" })`).
+* Avec le client synchrone, les fonctions de suivi (voir ci-dessous) doivent être appelées avec une fonction vide (p.
+  ex., `lambda: pass` ou bien tout simplement `fais_rien`) à la place de la fonction de suivi.
 * Vous vous demandez où trouver tous ces drôles de « id tableau » pour les bases de données qui vous intéressent ? Il
   s'agit de l'identifiant unique d'un tableau ou d'une base de données, que vous pouvez récupérer lorsque vous créez la
   base de données, ou bien visuellement avec
@@ -174,18 +175,18 @@ with Serveur():
 
 #### Fonctions de suivi
 
-Constellation, dans sa version asyncrone JavaScript, offre des fonctions qui, plutôt que de rendre le résultat
+Constellation, dans sa version asynchrone JavaScript, offre des fonctions qui, plutôt que de rendre le résultat
 immédiatement, *suivent* le résultat à travers le temps et vous notifient (selon une fonction que vous choisissez)
 chaque fois que le résultat change. La grande majorité des fonctions utiles de l'IPA de Constellation (p.
 ex., `client.tableaux.suivreDonnées`) sont de ce genre.
 
-Évidemment, ce comportement n'est pas util dans un programme syncrone. Le client syncrone `ClientSync`
+Évidemment, ce comportement n'est pas util dans un programme synchrone. Le client synchrone `ClientSync`
 s'occupe donc de vous rendre le résultat, sans tracas. Il vous suffira de passer une fonction vide là où la fonction
 originale s'attendait à avoir la fonction de suivi. Par exemple, si l'on appellerait la fonction comme suit dans
 Constellation JavaScript,
 
 ```javascript
-const données = await client.tableaux.suivreDonnées(id_tableau, fSuivi)
+const données = await client.tableaux.suivreDonnées({idTableau: id_tableau, f: fSuivi});
 ```
 
 Ici, en Python, nous ferons ainsi :
@@ -197,13 +198,13 @@ id_tableau = "/orbitdb/zdpu..."
 with Serveur():
     client = ClientSync()
 
-    mes_données = client.tableaux.suivreDonnées(id_tableau, fais_rien)
+    mes_données = client.tableaux.suivreDonnées(idTablea=id_tableau, f=fais_rien)
 ```
 
-### IPA asyncrone
+### IPA asynchrone
 
-L'IPA asyncrone doit être utilisée avec [trio](https://trio.readthedocs.io/). Il a les mêmes fonctions que l'IPA
-syncrone, mais dois être invoqué dans un bloc `async with ouvrir_client() as client:`
+L'IPA asynchrone doit être utilisée avec [trio](https://trio.readthedocs.io/). Il a les mêmes fonctions que l'IPA
+synchrone, mais dois être invoqué dans un bloc `async with ouvrir_client() as client:`
 
 ```python
 import trio
@@ -216,7 +217,8 @@ id_tableau = "/orbitdb/zdpu..."
 async def principale():
     with Serveur():
         async with ouvrir_client() as client:
-            données = await client.obt_données_tableau(id_tableau)
+            données = await client.obt_données_tableau(idTableau=id_tableau)
+            print(données)
             ...
 
 
@@ -241,7 +243,7 @@ async def principale():
         async with ouvrir_client() as client:
             # Suivre les données du réseau pour 15 secondes, et imprimer les résultats au fur et à mesure
             # qu'ils nous parviennent du réseau
-            oublier_données = await client.tableaux.suivreDonnées(id_tableau, print)
+            oublier_données = await client.tableaux.suivreDonnées(idTableau=id_tableau, f=print)
             await trio.sleep(15)
 
             oublier_données()  # Maintenant on ne recevra plus les mises à jour des données
@@ -252,7 +254,7 @@ trio.run(principale)
 
 Mais en Python, il est probable que, au lieu de vouloir suivre le résultat de la fonction à travers le temps, vous
 préférerez obtenir les données présentes et puis poursuivre vos analyses. La fonction `une_fois`
-vous permet de faire justement celà :
+vous permet de faire justement cela :
 
 ```python
 import trio
@@ -268,7 +270,7 @@ async def principale():
             # On doit définir une fonction auxiliaire que ne prend que la fonction de suivi
             # en tant qu'argument
             async def f_données(f):
-                return await client.tableaux.suivreDonnées(id_tableau, f)
+                return await client.tableaux.suivreDonnées(idTableau=id_tableau, f=f)
 
             # La fonction `une_fois` appellera `f_données`, attendra le premier résultat,
             # et nous renverra celui-ci.
@@ -333,7 +335,7 @@ async def coroutine_constellation(pouponnière, canal_envoie):
     async with Client(pouponnière) as client:
         await client.connecter()  # À ne pas oublier ! Sinon je ne suis pas responsable.
 
-        données = await client.obt_données_tableau(id_tableau)
+        données = await client.obt_données_tableau(idTableau=id_tableau)
 
         async with canal_envoie:
             await canal_envoie.send(données)
@@ -342,7 +344,7 @@ async def coroutine_constellation(pouponnière, canal_envoie):
 async def une_autre_coroutine(canal_réception):
     async with canal_réception:
         async for message in canal_réception:
-            print(message)  # En réalité, faire quelque chose d'asyncrone, comme écrire au disque
+            print(message)  # En réalité, faire quelque chose d'asynchrone, comme écrire au disque
 
 
 async def principale():

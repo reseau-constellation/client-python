@@ -41,8 +41,24 @@ class TestClient(TestCase):
             async with ouvrir_client() as client:
                 await client.ce_module_nexiste_pas.ni_cette_fonction()
 
-    @unittest.skip
+    @unittest.skipIf(VRAI_SERVEUR, "Test uniquement pour le faux serveur.")
     async def test_suivre(soimême):
+        résultat = {}
+
+        def traiter_résultat(x):
+            résultat["x"] = x
+
+        async with ouvrir_client() as client:
+            oublier = await client.fonction_suivi(f=traiter_résultat)
+            await client.changer_valeur_suivie(x=3)
+            soimême.assertEqual(résultat["x"], 3)
+
+            oublier()
+            await client.changer_valeur_suivie(x=2)
+            soimême.assertNotEqual(résultat["x"], 2)
+
+    @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
+    async def test_suivre_données(soimême):
         canal_envoie, canal_réception = trio.open_memory_channel(0)
 
         async with ouvrir_client() as client:
@@ -65,14 +81,14 @@ class TestClient(TestCase):
                     soimême.assertEqual(m, 123)
             oublier_données()
 
-    @unittest.skip
+    @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     async def test_obt_données_tableau(soimême):
         async with ouvrir_client() as client:
             données = await client.obt_données_tableau("orbitdb/...")
         raise NotImplementedError
         # soimême.assertEqual(expected, result)
 
-    @unittest.skip
+    @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     async def test_obt_données_réseau(soimême):
         async with ouvrir_client() as client:
             données = client.obt_données_réseau("clef unique bd", "clef unique tableau")

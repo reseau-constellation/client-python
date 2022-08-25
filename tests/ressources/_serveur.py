@@ -1,11 +1,10 @@
 import json
 import sys
-import uuid
 
 import click
 import trio
 from click_default_group import DefaultGroup
-from trio_websocket import serve_websocket, ConnectionClosed
+from trio_websocket import serve_websocket, ConnectionClosed, WebSocketConnection
 
 try:
     from constellationPy.const import V_SERVEUR_NÉCESSAIRE
@@ -20,64 +19,86 @@ def erreur_fonction_non_définie(message):
     return {
         "type": "erreur",
         "id": message["id"],
-        "erreur": f"Fonction `Client.{'.'.join(message['fonction'])}()` non définie"
+        "erreur": f"Fonction `Client.{'.'.join(message['fonction'])}()` n'existe pas ou n'est pas une fontion."
     }
 
 
-async def traiter_message(message):
+async def envoyer_message_à_ws(message, ws: WebSocketConnection):
+    await ws.send_message(json.dumps(message))
+
+
+class Suiveur(object):
+    def __init__(soimême):
+        soimême.connexions = {}
+        soimême.valeur = None
+
+    async def suivre(soimême, id_, ws):
+        soimême.connexions[id_] = ws
+        await envoyer_message_à_ws({
+            "type": "suivre",
+            "id": id_,
+            "données": soimême.valeur
+        }, ws)
+
+    def oublier(soimême, id):
+        soimême.connexions.pop(id)
+
+    async def changerValeur(soimême, val):
+        soimême.valeur = val
+        for id_, ws in soimême.connexions.items():
+            await envoyer_message_à_ws({
+                "type": "suivre",
+                "id": id_,
+                "données": soimême.valeur
+            }, ws)
+
+
+suiveur = Suiveur()
+
+
+async def traiter_message(message, ws: WebSocketConnection):
     message = json.loads(message)
     type_ = message["type"]
 
-    if type_ == "init":
-        return {
-            "type": "prêt"
-        }
-    elif type_ == "suivre":
+    if type_ == "suivre":
         fonction = tuple(message["fonction"])
-        if fonction == ("tableaux", "suivreDonnées"):
-            async def f(canal_envoyer, task_status=trio.TASK_STATUS_IGNORED):
-                with trio.CancelScope() as _context:
-                    task_status.started(_context)
-                    async with canal_envoyer:
-                        await canal_envoyer
-            # annuler = pouponnière.start(f, canal_envoyer)
+        if fonction == ("fonctionSuivi",):
+            await envoyer_message_à_ws({
+                "type": "suivrePrêt",
+                "id": message["id"]
+            }, ws)
+            await suiveur.suivre(message["id"], ws)
         else:
-            return erreur_fonction_non_définie(message)
-        return {
-            "type": "suivrePrêt",
-            "id": message["id"]
-        }
+            await envoyer_message_à_ws(erreur_fonction_non_définie(message), ws)
+
     elif type_ == "oublier":
         id_ = message["id"]
-        # if id_ in fonctions_oublier:
-        #     f = fonctions_oublier.pop(id_)
-        #     f()
+        suiveur.oublier(id_)
     elif type_ == "action":
         fonction = tuple(message["fonction"])
         if fonction == ("obtIdOrbite",):
             résultat = "1234567890"
+            await envoyer_message_à_ws({
+                "type": "action",
+                "id": message["id"],
+                "résultat": résultat,
+            }, ws)
         elif fonction == ("ceciEstUnTest", "deSousModule"):
             résultat = "C'est beau"
-        elif fonction == ("bds", "créerBd") \
-                or fonction == ("bds", "ajouterTableauBd") \
-                or fonction == ("variables", "créerVariable"):
-            résultat = "orbitdb/zdpu..." + str(uuid.uuid4())
-        elif fonction == ("tableaux", "ajouterColonneTableau"):
-            résultat = str(uuid.uuid4())
-        elif fonction == ("tableaux", "ajouterÉlément"):
-            id_tableau, élément = message["args"]
-            élément["id"] = str(uuid.uuid4())
-            if id_tableau not in _données:
-                _données[id_tableau] = []
-            _données[id_tableau] += [élément]
-            résultat = élément["id"]
+            await envoyer_message_à_ws({
+                "type": "action",
+                "id": message["id"],
+                "résultat": résultat,
+            }, ws)
+        elif fonction == ("changerValeurSuivie",):
+            await suiveur.changerValeur(message["args"]["x"])
+            await envoyer_message_à_ws({
+                "type": "action",
+                "id": message["id"],
+            }, ws)
         else:
-            return erreur_fonction_non_définie(message)
-        return {
-            "type": "action",
-            "id": message["id"],
-            "résultat": résultat,
-        }
+            await envoyer_message_à_ws(erreur_fonction_non_définie(message), ws)
+
     else:
         raise {
             "type": "action",
@@ -91,8 +112,7 @@ async def serveur(request):
     while True:
         try:
             message = await ws.get_message()
-            réponse = await traiter_message(message)
-            await ws.send_message(json.dumps(réponse))
+            await traiter_message(message, ws)
         except ConnectionClosed:
             break
 
