@@ -2,13 +2,17 @@ from unittest import TestCase
 
 import trio
 
-from constellationPy.utils import à_chameau, une_fois
+from constellationPy.utils import à_chameau, à_kebab, une_fois
 
 
 class TestUtils(TestCase):
     def test_à_chameau(soimême):
         chameau = à_chameau("suivre_données_tableau")
         soimême.assertEqual(chameau, "suivreDonnéesTableau")
+
+    def test_à_kebab(soimême):
+        kebab = à_kebab("suivreDonnéesTableau")
+        soimême.assertEqual(kebab, "suivre_données_tableau")
 
     async def test_une_fois(soimême):
         async with trio.open_nursery() as pouponnière:
