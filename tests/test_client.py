@@ -9,10 +9,12 @@ from tests.utils import Serveur, VRAI_SERVEUR
 
 
 class TestClient(TestCase):
+    serveur: Serveur
 
-    def setUp(soimême) -> None:
-        soimême.serveur = Serveur()
-        soimême.serveur.__enter__()
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.serveur = Serveur()
+        cls.serveur.__enter__()
 
     async def test_action(soimême):
         async with ouvrir_client() as client:
@@ -59,27 +61,28 @@ class TestClient(TestCase):
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     async def test_suivre_données(soimême):
-        canal_envoie, canal_réception = trio.open_memory_channel(0)
-
         async with ouvrir_client() as client:
+            print("client ouvert")
             id_bd = await client.bds.créerBd(licence="ODBl-1.0")
-            id_tableau = await client.bds.ajouterTableauBd(id_bd=id_bd)
+            print("id_bd", id_bd)
+            id_tableau = await client.bds.ajouterTableauBd(id=id_bd)
+            print("id_tableau", id_tableau)
 
             id_var = await client.variables.créerVariable(catégorie="numérique")
-            id_col = await client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_var=id_var)
+            print("id_var", id_var)
+            id_col = await client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_variable=id_var)
+            print("id_col", id_col)
 
             async def f_suivre_données(éléments):
-                async with canal_envoie:
-                    if éléments:
-                        await canal_envoie.send(éléments[0][id_col])
+                if éléments:
+                    print("éléments", éléments)
+                    soimême.assertEqual(éléments[0][id_col], 123)
+                    oublier_données()
 
-            oublier_données = await client.tableaux.suivreDonnées(id_tableau=id_tableau, f=f_suivre_données)
-            await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
-
-            async with canal_réception:
-                async for m in canal_réception:
-                    soimême.assertEqual(m, 123)
-            oublier_données()
+            # oublier_données = await client.tableaux.suivreDonnées(id_tableau=id_tableau, f=f_suivre_données)
+            print("oublier données")
+            id_élément = await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
+            print("id_élément", id_élément)
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     async def test_obt_données_tableau(soimême):
@@ -91,7 +94,7 @@ class TestClient(TestCase):
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     async def test_obt_données_réseau(soimême):
         async with ouvrir_client() as client:
-            données = client.obt_données_réseau("clef unique bd", "clef unique tableau")
+            données = await client.obt_données_réseau("clef unique bd", "clef unique tableau")
         raise NotImplementedError
         # soimême.assertEqual(expected, result)
 
@@ -119,5 +122,6 @@ class TestClient(TestCase):
         print(erreurs)
         soimême.assertEqual(len(erreurs), 1)
 
-    def tearDown(soimême) -> None:
-        soimême.serveur.__exit__()
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.serveur.__exit__()
