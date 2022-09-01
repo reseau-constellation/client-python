@@ -291,6 +291,7 @@ class Client(trio.abc.AsyncResource):
         id_ = str(uuid4())
         nom_arg_fonction = next((c for c, v in argsmc.items() if callable(v)), None)
         adresse_fonction = [à_chameau(x) for x in soimême._liste_attributs]
+        argsmc = {à_chameau(c): v for c, v in argsmc.items()}
 
         if nom_arg_fonction is not None:
             return await soimême._appeler_fonction_suivre(
