@@ -198,6 +198,8 @@ class Client(trio.abc.AsyncResource):
             return val["résultat"] if "résultat" in val else None
         else:
             soimême._erreur(
+                json.dumps(val, ensure_ascii=False, indent=2) +
+                "Avez-vous utilisés les bons arguments pour la fonction que vous venez d'appeler ?. \n"
                 "Le serveur local Constellation semble être en grève. \n"
                 "Si les négotiations n'aboutissent pas, n'hésitez pas à "
                 "nous demander de l'aide :\n"
