@@ -256,7 +256,12 @@ class Client(trio.abc.AsyncResource):
             soimême.pouponnière.start_soon(soimême._envoyer_message, message_oublier)
             context.cancel()
 
-        await soimême._attendre_message(id_, soimême.canal_réception.clone())
+        fonctions_retour = await soimême._attendre_message(id_, soimême.canal_réception.clone())
+        if "résultat" in fonctions_retour and fonctions_retour["résultat"]:
+            return {
+                "fOublier": f_oublier,
+                **{f: lambda args_: f(args_) for f in fonctions_retour}
+            }
         return f_oublier
 
     async def _attendre_message(soimême, id_: str, canal_réception):
