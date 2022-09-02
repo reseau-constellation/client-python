@@ -136,8 +136,8 @@ from constellationPy import ClientSync, Serveur
 with Serveur():
     client = ClientSync()
 
-    client.profil.sauvegarderNom(langue="fr", nom="moi !")
-    client.bds.créerBd(licence="ODbl-1.0")
+    client.profil.sauvegarder_nom(langue="fr", nom="moi !")
+    client.bds.créer_bd(licence="ODbl-1.0")
 
 ```
 
@@ -153,7 +153,7 @@ id_tableau = "/orbitdb/zdpu..."
 
 with Serveur():
     client = ClientSync()
-    données = client.obt_données_tableau(idTableau=id_tableau)
+    données = client.obt_données_tableau(id_tableau=id_tableau)
 ```
 
 **Quelques points importants**
@@ -198,7 +198,7 @@ id_tableau = "/orbitdb/zdpu..."
 with Serveur():
     client = ClientSync()
 
-    mes_données = client.tableaux.suivreDonnées(idTablea=id_tableau, f=fais_rien)
+    mes_données = client.tableaux.suivre_données(id_tableau=id_tableau, f=fais_rien)
 ```
 
 ### IPA asynchrone
@@ -217,7 +217,7 @@ id_tableau = "/orbitdb/zdpu..."
 async def principale():
     with Serveur():
         async with ouvrir_client() as client:
-            données = await client.obt_données_tableau(idTableau=id_tableau)
+            données = await client.obt_données_tableau(id_tableau=id_tableau)
             print(données)
             ...
 
@@ -243,7 +243,7 @@ async def principale():
         async with ouvrir_client() as client:
             # Suivre les données du réseau pour 15 secondes, et imprimer les résultats au fur et à mesure
             # qu'ils nous parviennent du réseau
-            oublier_données = await client.tableaux.suivreDonnées(idTableau=id_tableau, f=print)
+            oublier_données = await client.tableaux.suivre_données(id_tableau=id_tableau, f=print)
             await trio.sleep(15)
 
             oublier_données()  # Maintenant on ne recevra plus les mises à jour des données
@@ -267,10 +267,10 @@ id_tableau = "/orbitdb/zdpu..."
 async def principale():
     with Serveur():
         async with ouvrir_client() as client:
-            # On doit définir une fonction auxiliaire que ne prend que la fonction de suivi
+            # On doit définir une fonction auxiliaire qui ne prend que la fonction de suivi
             # en tant qu'argument
             async def f_données(f):
-                return await client.tableaux.suivreDonnées(idTableau=id_tableau, f=f)
+                return await client.tableaux.suivre_données(id_tableau=id_tableau, f=f)
 
             # La fonction `une_fois` appellera `f_données`, attendra le premier résultat,
             # et nous renverra celui-ci.
@@ -335,7 +335,7 @@ async def coroutine_constellation(pouponnière, canal_envoie):
     async with Client(pouponnière) as client:
         await client.connecter()  # À ne pas oublier ! Sinon je ne suis pas responsable.
 
-        données = await client.obt_données_tableau(idTableau=id_tableau)
+        données = await client.obt_données_tableau(id_tableau=id_tableau)
 
         async with canal_envoie:
             await canal_envoie.send(données)
