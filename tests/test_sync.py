@@ -5,10 +5,13 @@ from tests.utils import Serveur, VRAI_SERVEUR
 
 
 class TestSync(unittest.TestCase):
-    def setUp(soimême) -> None:
-        soimême.serveur = Serveur()
-        soimême.serveur.__enter__()
-        soimême.client = ClientSync()
+    serveur: Serveur
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.serveur = Serveur()
+        cls.serveur.__enter__()
+        cls.client = ClientSync()
 
     def test_action_sync(soimême):
         id_orbite = soimême.client.obtIdOrbite()
@@ -46,5 +49,6 @@ class TestSync(unittest.TestCase):
         raise NotImplementedError
         # soimême.assertEqual(expected, result)
 
-    def tearDown(soimême) -> None:
-        soimême.serveur.__exit__()
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.serveur.__exit__()
