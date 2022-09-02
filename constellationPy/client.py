@@ -212,11 +212,11 @@ class Client(trio.abc.AsyncResource):
             adresse_fonction: List[str],
             args: Dict[str, any],
             nom_arg_fonction: str
-    ) -> Callable[[], None]:
+    ) -> Union[Callable[[], None], Dict[str, Callable[[Any], None]]]:
 
-        f = args[nom_arg_fonction]
-        args_ = [a for a in args.values() if not callable(a)]
-        if len(args_) != len(args) - 1:
+        f = args.pop(nom_arg_fonction)
+        args = {c: v for c, v in args.items() if not callable(v)}
+        if any(callable(v) for v in args.values()):
             soimême._erreur("Plus d'un argument est une fonction.")
             return lambda: None
 
@@ -224,7 +224,7 @@ class Client(trio.abc.AsyncResource):
             "type": "suivre",
             "id": id_,
             "fonction": adresse_fonction,
-            "args": args_,
+            "args": args,
             "nomArgFonction": nom_arg_fonction
         }
 
