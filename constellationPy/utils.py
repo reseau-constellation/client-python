@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TypedDict, Dict, List
 from typing import TYPE_CHECKING
 
+import pandas as pd
 import trio
 
 if TYPE_CHECKING:
@@ -39,3 +40,24 @@ async def une_fois(f_suivre, pouponnière: trio.Nursery) -> Any:
         async for message in canal_réception:
             f_oublier()
             return message
+
+
+type_élément = TypedDict("type_élément", {"empreinte": str, "données": Dict[str, Any]})
+type_tableau = List[type_élément]
+
+
+def tableau_à_pandas(tableau: type_tableau, index_empreinte=False) -> pd.DataFrame:
+    index = [x["empreinte"] for x in tableau] if index_empreinte else None
+    données = [x["données"] for x in tableau]
+
+    données_pandas = pd.DataFrame(données, index=index)
+    return données_pandas
+
+
+def pandas_à_constellation(données_pandas: pd.DataFrame) -> List[Dict[str, Any]]:
+    données = []
+    for _, r in données_pandas.iterrows():
+        r_finale = {c: v for c, v in r.to_dict().items() if not pd.isna(v)}
+        données.append(r_finale)
+
+    return données
