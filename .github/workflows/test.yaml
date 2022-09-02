@@ -15,10 +15,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Installer Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Préparation de Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
 
       #----------------------------------------------
       #  -----  install & configure poetry  -----
@@ -53,7 +58,7 @@ jobs:
       #----------------------------------------------
       #              run test suite
       #----------------------------------------------
-      - name: Run tests
+      - name: Tests simples
         run: poetry run pytest
 
       - name: Tests complets
