@@ -1,12 +1,11 @@
 import json
-import os
 import platform
-import shutil
 import subprocess
+from datetime import datetime
+from functools import lru_cache
 from typing import Optional, TypedDict, Union, List, Tuple
 
 import urllib3
-from appdirs import user_data_dir
 from semantic_version import SimpleSpec, Version
 
 from .const import V_SERVEUR_NÉCESSAIRE, PAQUET_SERVEUR, PAQUET_IPA, EXE_CONSTL
@@ -19,40 +18,72 @@ class ErreurInstallationConstellation(ChildProcessError):
     pass
 
 
-def lancer_serveur(port=None, autoinstaller=True, exe: TypeExe = EXE_CONSTL) -> Tuple[subprocess.Popen, int]:
+def lancer_serveur(
+        port=None,
+        autoinstaller=True,
+        sfip: Optional[Union[str, int]] = None,
+        orbite: Optional[str] = None,
+        exe: TypeExe = EXE_CONSTL
+) -> Tuple[subprocess.Popen, int]:
     if isinstance(exe, str):
         exe = [exe]
 
+    avant = datetime.now()
     if autoinstaller:
         try:
             vérifier_installation_constellation(exe)
+            temps = datetime.now() - avant
+            print(f"Installation vérifiée en {temps} secondes.")
         except ErreurInstallationConstellation:
+            print("Il y a eu une erreur !")
+            avant = datetime.now()
             mettre_constellation_à_jour(exe)
+            temps = datetime.now() - avant
+            print(f"Constellation mise à jour en {temps} secondes.")
 
+    avant = datetime.now()
     vérifier_installation_constellation(exe)
+    temps = datetime.now() - avant
+    print(f"Installation (re)vérifiée en {temps} secondes.")
 
     cmd = [*exe, "lancer"]
     if port:
         cmd += ["-p", str(port)]
+    if orbite:
+        cmd += ["--doss-orbite", orbite]
+    if sfip:
+        cmd += ["--doss-sfip", sfip]
+
+    avant = datetime.now()
     p = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, bufsize=0, universal_newlines=True
     )
+    temps = datetime.now() - avant
+    print(f"Constellation lancée en {temps} secondes.")
+
+    avant = datetime.now()
     for ligne in iter(p.stdout.readline, b''):
         if not ligne:
             break
         if ligne.startswith("Serveur prêt sur port :"):
             port = int(ligne.split(":")[1])
             break
+
+    temps = datetime.now() - avant
+    print(f"Constellation prête en {temps} secondes.")
+
     return p, port
 
 
-type_context = TypedDict("type_context", {"port_serveur": Optional[int]})
-context: type_context = {"port_serveur": None}
+type_contexte = TypedDict("type_contexte", {"port_serveur": Optional[int]})
+context: type_contexte = {"port_serveur": None}
+
+ErreurConnexionContexteExistant = ConnectionError("On ne peut avoir qu'un seule serveur en contexte à la fois.")
 
 
 def changer_contexte(port: int):
     if context["port_serveur"] is not None:
-        raise ConnectionError("On ne peut avoir qu'un seule serveur en contexte à la fois.")
+        raise ErreurConnexionContexteExistant
 
     context["port_serveur"] = port
 
@@ -69,75 +100,8 @@ def mettre_constellation_à_jour(exe: TypeExe = EXE_CONSTL):
     print("Mise à jour de Constellation")
     assurer_npm_yarn_installés()
 
-    try:
-        vérifier_installation_constellation(exe)
-    except ErreurInstallationConstellation:
-        installer_tout_de_github()  # Solution temporaire à https://github.com/orbitdb/orbit-db-io/issues/39
-
     mettre_serveur_à_jour(exe)
     mettre_ipa_à_jour(exe)
-
-
-def installer_tout_de_github():
-    print("Installation de Constellation de Github")
-    installer_de_github("reseau-constellation/serveur-ws")
-    # installer_de_github("reseau-constellation/ipa")
-
-
-def installer_de_github(paquet: str):
-    print(f"Installation de {paquet} de Github")
-
-    adresse_dossier = user_data_dir("constl-py")
-    if not os.path.isdir(adresse_dossier):
-        os.makedirs(adresse_dossier)
-
-    cwd = os.path.join(adresse_dossier, paquet.split("/")[-1])
-    if os.path.isdir(cwd):
-        shutil.rmtree(cwd)
-
-    résultat_git = subprocess.run(
-        ["git", "clone", f"https://github.com/{paquet}.git"],
-        cwd=adresse_dossier,
-        capture_output=True
-    )
-    if résultat_git.returncode != 0:
-        raise ConnectionError(
-            f"Erreur d'installation de {paquet} :\n\t{résultat_git.stderr.decode()}"
-        )
-
-    print(f"\tInstallation des dépendances de {paquet}")
-    résultat_installation = subprocess.run(
-        ["yarn", "install"],
-        cwd=cwd,
-        capture_output=True
-    )
-    if résultat_installation.returncode != 0:
-        raise ConnectionError(
-            f"Erreur d'installation des dépendances de {paquet} :\n\t{résultat_installation.stderr.decode()}"
-        )
-
-    print(f"\tCompilation de {paquet}")
-    résultat_compilation = subprocess.run(
-        ["yarn", "compiler"],
-        cwd=cwd,
-        capture_output=True
-    )
-    if résultat_compilation.returncode != 0:
-        raise ConnectionError(
-            f"Erreur de compilation de {paquet} :\n\t{résultat_compilation.stderr.decode()}"
-        )
-
-    print(f"\tInstallation globale de {paquet}")
-    résultat_constellation = subprocess.run(
-        ["yarn", "global", "add", f"file:{cwd}"],
-        cwd=cwd,
-        capture_output=True
-    )
-
-    if résultat_constellation.returncode != 0:
-        raise ConnectionError(
-            f"Erreur d'installation du paquet {paquet} :\n\t{résultat_constellation.stderr.decode()}"
-        )
 
 
 def mettre_serveur_à_jour(exe: TypeExe = EXE_CONSTL):
@@ -180,7 +144,7 @@ def obt_versions_dispo_npm(paquet: str) -> List[Version]:
     return [Version(v) for v in json.loads(r.data.decode())["versions"].keys()]
 
 
-def _obt_version(commande: Union[str, List[str]], arg="-v") -> Optional[str]:
+def _obt_version(commande: TypeExe, arg="-v") -> Optional[str]:
     if isinstance(commande, str):
         commande = [commande]
 
@@ -272,19 +236,24 @@ def obt_version_ipa(exe: TypeExe = EXE_CONSTL) -> Optional[Version]:
     return Version(_obt_version(exe, "v-constl"))
 
 
-def vérifier_installation_constellation(exe: TypeExe = EXE_CONSTL):
+@lru_cache
+def _vérifier_installation(exe_: Union[str, Tuple[str]]) -> True:
+    print("ici", exe_)
     message_erreur = "Constellation doit être installée et à jour sur votre appareil. " \
                      "Vous pouvez utiliser `mettre_constellation_à_jour()` pour ce faire. " \
                      "\nSi vous avez toujours des problèmes, vous pouvez utiliser `désinstaller_constellation()`" \
                      "pour nettoyer une installation brisée."
 
+    if isinstance(exe_, tuple):
+        exe_ = list(exe_)
+
     # Si @constl/ipa non installée, erreur
-    ipa_installée = ipa_est_installée(exe)
+    ipa_installée = ipa_est_installée(exe_)
     if not ipa_installée:
         raise ErreurInstallationConstellation(message_erreur)
 
     # Obtenir version serveur
-    version_serveur = obt_version_serveur(exe)
+    version_serveur = obt_version_serveur(exe_)
 
     # Si serveur non installé, erreur
     if not version_serveur:
@@ -295,10 +264,14 @@ def vérifier_installation_constellation(exe: TypeExe = EXE_CONSTL):
         raise ErreurInstallationConstellation(message_erreur)
 
     # Vérifier version @constl/ipa compatible avec @constl/serveur
-    version_ipa = obt_version_ipa(exe)
-    spécifications_compatibles = SimpleSpec(_obt_version(exe, "v-constl-obli"))
+    version_ipa = obt_version_ipa(exe_)
+    spécifications_compatibles = SimpleSpec(_obt_version(exe_, "v-constl-obli"))
     if version_ipa not in spécifications_compatibles:
         raise ErreurInstallationConstellation(message_erreur)
+
+
+def vérifier_installation_constellation(exe: TypeExe = EXE_CONSTL):
+    return _vérifier_installation(exe if isinstance(exe, str) else tuple(exe))
 
 
 def assurer_npm_yarn_installés():
@@ -378,15 +351,33 @@ def obt_version_npm() -> Optional[str]:
 
 
 class Serveur(object):
-    def __init__(soimême, port: Optional[int] = None, autoinstaller=True, exe: TypeExe = EXE_CONSTL):
+    def __init__(
+            soimême,
+            port: Optional[int] = None,
+            autoinstaller=True,
+            sfip: Optional[Union[str, int]] = None,
+            orbite: Optional[str] = None,
+            exe: TypeExe = EXE_CONSTL
+    ):
         soimême.port = port
         soimême.autoinstaller = autoinstaller
         soimême.exe = exe
 
+        soimême.sfip = sfip
+        soimême.orbite = orbite
+
         soimême.serveur: Optional[subprocess.Popen] = None
 
     def __enter__(soimême):
-        soimême.serveur, soimême.port = lancer_serveur(soimême.port, soimême.autoinstaller, soimême.exe)
+        if obtenir_contexte():
+            raise ErreurConnexionContexteExistant
+        soimême.serveur, soimême.port = lancer_serveur(
+            port=soimême.port,
+            autoinstaller=soimême.autoinstaller,
+            sfip=soimême.sfip,
+            orbite=soimême.orbite,
+            exe=soimême.exe
+        )
         changer_contexte(soimême.port)
         return soimême
 
