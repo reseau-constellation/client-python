@@ -381,7 +381,7 @@ async def coroutine_client(pouponnière, canal_envoie_erreur):
 async def coroutine_erreurs(canal_reçoie_erreurs):
     async with canal_reçoie_erreurs:
         async for erreur in canal_reçoie_erreurs:
-            print(erreur)  # Où écrire à un fichier log sur le disque...
+            print(erreur)  # Ou écrire à un fichier journal sur le disque...
 
 
 async def principale():
