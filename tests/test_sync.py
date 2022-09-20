@@ -36,16 +36,16 @@ class TestSync(unittest.TestCase):
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur")
     def test_obt_données_tableau(soimême):
-        client = ClientSync()
-        données = client.obt_données_tableau("orbitdb/...")
+        # client = ClientSync()
+        # données = client.obt_données_tableau("orbitdb/...")
         raise NotImplementedError
         # soimême.assertEqual(expected, result)
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur")
     def test_obt_données_réseau(soimême):
-        client = ClientSync()
-        données = client.obt_données_réseau("clef unique bd", "clef unique tableau")
-        print(données)
+        # client = ClientSync()
+        # données = client.obt_données_réseau("clef unique bd", "clef unique tableau")
+        # print(données)
         raise NotImplementedError
         # soimême.assertEqual(expected, result)
 
