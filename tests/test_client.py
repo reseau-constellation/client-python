@@ -9,11 +9,13 @@ from tests.utils import Serveur, VRAI_SERVEUR
 
 
 class TestClient(TestCase):
+    dossier: tempfile.TemporaryDirectory
     serveur: Serveur
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.serveur = Serveur()
+        cls.dossier = tempfile.TemporaryDirectory()
+        cls.serveur = Serveur(sfip=path.join(cls.dossier.name, "sfip"), orbite=path.join(cls.dossier.name, "orbite"))
         cls.serveur.__enter__()
 
     async def test_action(soimême):
@@ -122,3 +124,4 @@ class TestClient(TestCase):
     @classmethod
     def tearDownClass(cls) -> None:
         cls.serveur.__exit__()
+        cls.dossier.cleanup()
