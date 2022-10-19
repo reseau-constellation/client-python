@@ -175,8 +175,7 @@ class Client(trio.abc.AsyncResource):
                 raise RuntimeError(e)
 
     async def _envoyer_message(soimême, message: Dict) -> None:
-        print("envoyer message", pprint.pprint(message))
-        await soimême.connexion.send_message(json.dumps(message))
+        await soimême.connexion.send_message(json.dumps(message, ensure_ascii=False))
 
     async def _appeler_fonction_action(
             soimême,
@@ -240,7 +239,7 @@ class Client(trio.abc.AsyncResource):
                         print("val", val)
                         if val["type"] == "suivre":
                             if "id" in val and val["id"] == id_:
-                                print("message suivi reçu !")
+                                print("message suivi reçu !", val["résultat"])
                                 f(val["résultat"])
 
         context = await soimême.pouponnière.start(_suiveur, soimême.canal_réception.clone())
