@@ -62,30 +62,22 @@ class TestClient(TestCase):
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     async def test_suivre_données(soimême):
         async with ouvrir_client() as client:
-            print("client ouvert")
             id_bd = await client.bds.créerBd(licence="ODBl-1.0")
-            print("id_bd", id_bd)
-            id_tableau = await client.bds.ajouterTableauBd(id=id_bd)
-            print("id_tableau", id_tableau)
+            id_tableau = await client.bds.ajouterTableauBd(id_bd=id_bd)
 
             id_var = await client.variables.créerVariable(catégorie="numérique")
-            print("id_var", id_var)
             id_col = await client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_variable=id_var)
-            print("id_col", id_col)
 
             résultat = {}
 
             def f_suivre_données(éléments):
-                print("éléments", éléments)
                 if éléments:
                     résultat["élément"] = éléments
                     soimême.assertEqual(éléments[0]["données"][id_col], 123)
                     oublier_données()
 
             oublier_données = await client.tableaux.suivreDonnées(id_tableau=id_tableau, f=f_suivre_données)
-            print("oublier données")
-            id_élément = await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
-            print("id_élément", id_élément)
+            await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
 
             soimême.assertIsNotNone(résultat["élément"])
 
