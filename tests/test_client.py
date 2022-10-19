@@ -86,9 +86,16 @@ class TestClient(TestCase):
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     async def test_obt_données_tableau(soimême):
         async with ouvrir_client() as client:
-            données = await client.obt_données_tableau("orbitdb/...")
-        raise NotImplementedError
-        # soimême.assertEqual(expected, result)
+            id_bd = await client.bds.créerBd(licence="ODBl-1.0")
+            id_tableau = await client.bds.ajouterTableauBd(id_bd=id_bd)
+
+            id_var = await client.variables.créerVariable(catégorie="numérique")
+            id_col = await client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_variable=id_var)
+            await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
+
+            données = await client.obt_données_tableau(id_tableau)
+
+        soimême.assertEqual([], données)
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     async def test_obt_données_réseau(soimême):
