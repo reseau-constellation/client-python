@@ -23,7 +23,7 @@ class TestClient(TestCase):
     async def test_action(soimême):
         async with ouvrir_client() as client:
             id_orbite = await client.obtIdOrbite()
-            soimême.assertIsInstance(id_orbite, str)
+        soimême.assertIsInstance(id_orbite, str)
 
     async def test_kebab_et_chameau(soimême):
         async with ouvrir_client() as client:
