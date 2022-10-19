@@ -3,7 +3,7 @@ from typing import Optional, List
 import trio
 
 from .client import ouvrir_client
-from .utils import à_kebab, une_fois
+from .utils import à_kebab, une_fois, à_chameau
 
 
 class ClientSync(object):
@@ -14,9 +14,9 @@ class ClientSync(object):
     def __getattr__(soimême, item):
         return ClientSync(soimême.port, soimême._liste_attributs + [à_kebab(item)])
 
-    def __call__(soimême, *args):
-        print(soimême._liste_attributs)
-        fonction_suivi = soimême._liste_attributs[-1].startswith("suivre")
+    def __call__(soimême, **argsmc):
+        nom_arg_fonction = next((c for c, v in argsmc.items() if callable(v)), None)
+        argsmc = {à_chameau(c): v for c, v in argsmc.items()}
 
         async def f_async():
             async with ouvrir_client() as client:
@@ -24,16 +24,13 @@ class ClientSync(object):
                 for x in soimême._liste_attributs:
                     f_client = getattr(f_client, x)
 
-                if fonction_suivi:
-                    i_arg_fonction = next(i for i, é in enumerate(args) if callable(é))
-
+                if nom_arg_fonction:
                     async def f_pour_une_fois(f):
-                        liste_args = list(args)
-                        liste_args[i_arg_fonction] = f
-                        return await f_client(*liste_args)
+                        argsmc[nom_arg_fonction] = f
+                        return await f_client(**argsmc)
 
                     return await une_fois(f_pour_une_fois, client.pouponnière)
 
-                return await f_client(*args)
+                return await f_client(**argsmc)
 
         return trio.run(f_async)
