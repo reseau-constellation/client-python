@@ -279,7 +279,7 @@ class Client(trio.abc.AsyncResource):
 
     async def obt_données_tableau(soimême, id_tableau: str):
         async def f_async(f):
-            return await soimême.tableaux.suivre_données(id_tableau, f)
+            return await soimême.tableaux.suivre_données(id_tableau=id_tableau, f=f)
 
         return await une_fois(f_async, soimême.pouponnière)
 
