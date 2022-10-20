@@ -32,14 +32,25 @@ class TestSync(unittest.TestCase):
 
     @unittest.skipIf(VRAI_SERVEUR, "Test uniquement pour le faux serveur")
     def test_suivre_sync(soimême):
-        pass
+        raise NotImplementedError
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur")
     def test_obt_données_tableau(soimême):
-        # client = ClientSync()
-        # données = client.obt_données_tableau("orbitdb/...")
-        raise NotImplementedError
-        # soimême.assertEqual(expected, result)
+        id_bd = soimême.client.bds.créerBd(licence="ODBl-1.0")
+        id_tableau = soimême.client.bds.ajouterTableauBd(id_bd=id_bd)
+
+        id_var = soimême.client.variables.créerVariable(catégorie="numérique")
+        id_col = soimême.client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_variable=id_var)
+        id_élément = soimême.client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
+        données = soimême.client.obt_données_tableau(id_tableau=id_tableau)
+
+        soimême.assertEqual(données, [
+            {
+                'données': {
+                    id_col: 123, 'id': données[0]['données']['id']
+                }, 'empreinte': id_élément
+            }
+        ])
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur")
     def test_obt_données_réseau(soimême):

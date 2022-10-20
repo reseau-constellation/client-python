@@ -1,7 +1,6 @@
 import json
 import platform
 import subprocess
-from datetime import datetime
 from functools import lru_cache
 from typing import Optional, TypedDict, Union, List, Tuple
 
@@ -28,23 +27,13 @@ def lancer_serveur(
     if isinstance(exe, str):
         exe = [exe]
 
-    avant = datetime.now()
     if autoinstaller:
         try:
             vérifier_installation_constellation(exe)
-            temps = datetime.now() - avant
-            print(f"Installation vérifiée en {temps} secondes.")
         except ErreurInstallationConstellation:
-            print("Il y a eu une erreur !")
-            avant = datetime.now()
             mettre_constellation_à_jour(exe)
-            temps = datetime.now() - avant
-            print(f"Constellation mise à jour en {temps} secondes.")
 
-    avant = datetime.now()
     vérifier_installation_constellation(exe)
-    temps = datetime.now() - avant
-    print(f"Installation (re)vérifiée en {temps} secondes.")
 
     cmd = [*exe, "lancer"]
     if port:
@@ -54,23 +43,15 @@ def lancer_serveur(
     if sfip:
         cmd += ["--doss-sfip", sfip]
 
-    avant = datetime.now()
     p = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, bufsize=0, universal_newlines=True
     )
-    temps = datetime.now() - avant
-    print(f"Constellation lancée en {temps} secondes.")
-
-    avant = datetime.now()
     for ligne in iter(p.stdout.readline, b''):
         if not ligne:
             break
         if ligne.startswith("Serveur prêt sur port :"):
             port = int(ligne.split(":")[1])
             break
-
-    temps = datetime.now() - avant
-    print(f"Constellation prête en {temps} secondes.")
 
     return p, port
 
@@ -109,7 +90,8 @@ def mettre_serveur_à_jour(exe: TypeExe = EXE_CONSTL):
     if not serveur_compatible(version_serveur):
         version_serveur_désirée = obt_version_serveur_plus_récente_compatible()
         print(
-            f"Mise à jour du serveur Constellation (version présente: {version_serveur}; version désirée: {version_serveur_désirée})")
+            f"Mise à jour du serveur Constellation (version présente : {version_serveur}; "
+            f"version désirée : {version_serveur_désirée})")
         installer_serveur(version_serveur_désirée)
 
 
@@ -238,7 +220,6 @@ def obt_version_ipa(exe: TypeExe = EXE_CONSTL) -> Optional[Version]:
 
 @lru_cache
 def _vérifier_installation(exe_: Union[str, Tuple[str]]) -> True:
-    print("ici", exe_)
     message_erreur = "Constellation doit être installée et à jour sur votre appareil. " \
                      "Vous pouvez utiliser `mettre_constellation_à_jour()` pour ce faire. " \
                      "\nSi vous avez toujours des problèmes, vous pouvez utiliser `désinstaller_constellation()`" \

@@ -16,7 +16,7 @@ class ClientSync(object):
 
     def __call__(soimême, **argsmc):
         nom_arg_fonction = next((c for c, v in argsmc.items() if callable(v)), None)
-        argsmc = {à_chameau(c): v for c, v in argsmc.items()}
+        argsmc = {c: v for c, v in argsmc.items()}  # Ne pas convertir à chameau ici ; le client asynchrone s'en occupe
 
         async def f_async():
             async with ouvrir_client() as client:

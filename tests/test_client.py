@@ -93,11 +93,17 @@ class TestClient(TestCase):
 
             id_var = await client.variables.créerVariable(catégorie="numérique")
             id_col = await client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_variable=id_var)
-            await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
+            id_élément = await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
 
-            données = await client.obt_données_tableau(id_tableau)
+            données = await client.obt_données_tableau(id_tableau=id_tableau)
 
-        soimême.assertEqual([], données)
+        soimême.assertEqual(données, [
+            {
+                'données': {
+                    id_col: 123, 'id': données[0]['données']['id']
+                }, 'empreinte': id_élément
+            }
+        ])
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     async def test_obt_données_réseau(soimême):
