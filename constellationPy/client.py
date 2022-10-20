@@ -296,8 +296,15 @@ class Client(trio.abc.AsyncResource):
     async def obt_données_tableau(soimême, id_tableau: str):
         async def f_async(f, task_status=trio.TASK_STATUS_IGNORED):
             with trio.CancelScope() as _context:
-                task_status.started(_context)
                 f_oublier = await soimême.tableaux.suivre_données(id_tableau=id_tableau, f=f)
+
+                class annuler(object):
+                    @staticmethod
+                    def cancel():
+                        f_oublier()
+                        _context.cancel()
+
+                task_status.started(annuler)
 
         return await une_fois(f_async, soimême.pouponnière)
 
