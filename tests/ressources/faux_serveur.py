@@ -11,5 +11,5 @@ class Serveur(ServeurOriginal):
     Un faux serveur pour simplifier le processus de test du client.
     """
 
-    def __init__(soimême, port=None):
+    def __init__(soimême, port=None, **_argsmc):
         super().__init__(port=port, autoinstaller=False, exe=[sys.executable, dir_serveur])
