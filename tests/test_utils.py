@@ -21,10 +21,15 @@ class TestUtils(TestCase):
         async with trio.open_nursery() as pouponnière:
             async def f_async(f, task_status=trio.TASK_STATUS_IGNORED):
                 with trio.CancelScope() as _context:
-                    task_status.started(_context)
+
+                    class annuler(object):
+                        @staticmethod
+                        async def cancel():
+                            _context.cancel()
+
+                    task_status.started(annuler)
                     await f(1)
                     await f(2)
-                    return fais_rien_asynchrone
 
             x = await une_fois(f_async, pouponnière)
         soimême.assertEqual(x, 1)
