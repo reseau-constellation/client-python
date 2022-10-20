@@ -106,11 +106,27 @@ class TestClient(TestCase):
         ])
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
+    async def test_obt_données_tableau_noms_colonnes(soimême):
+        raise NotImplementedError
+
+    @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
+    async def test_obt_données_tableau_format_pandas(soimême):
+        raise NotImplementedError
+
+    @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     async def test_obt_données_réseau(soimême):
         # async with ouvrir_client() as client:
         #     données = await client.obt_données_réseau("clef unique bd", "clef unique tableau")
         raise NotImplementedError
         # soimême.assertEqual(expected, result)
+
+    @unittest.skipIf(VRAI_SERVEUR, "Test uniquement pour le faux serveur.")
+    async def test_fonctions_retour(soimême):
+        raise NotImplementedError
+
+    @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
+    async def test_recherche(soimême):
+        raise NotImplementedError
 
     async def test_canal_erreurs(soimême):
 

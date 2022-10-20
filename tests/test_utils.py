@@ -4,7 +4,8 @@ import pandas as pd
 import trio
 import pandas.testing as pdt
 
-from constellationPy.utils import à_chameau, à_kebab, une_fois, tableau_à_pandas, pandas_à_constellation
+from constellationPy.utils import à_chameau, à_kebab, une_fois, tableau_à_pandas, pandas_à_constellation, \
+    fais_rien_asynchrone
 
 
 class TestUtils(TestCase):
@@ -23,6 +24,7 @@ class TestUtils(TestCase):
                     task_status.started(_context)
                     await f(1)
                     await f(2)
+                    return fais_rien_asynchrone
 
             x = await une_fois(f_async, pouponnière)
         soimême.assertEqual(x, 1)

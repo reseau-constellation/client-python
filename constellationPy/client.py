@@ -4,7 +4,7 @@ import inspect
 import json
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Optional, List, Any, Callable, Dict, Union, Tuple
+from typing import Optional, List, Any, Callable, Dict, Union, Tuple, Awaitable
 from uuid import uuid4
 
 import trio
@@ -12,7 +12,7 @@ import trio_websocket as tw
 
 from .const import LIEN_RAPPORTAGE_ERREURS
 from .serveur import obtenir_contexte
-from .utils import à_chameau, à_kebab, une_fois
+from .utils import à_chameau, à_kebab, une_fois, fais_rien_asynchrone
 
 
 # Idée de https://stackoverflow.com/questions/48282841/in-trio-how-can-i-have-a-background-task-that-lives-as-long-as-my-object-does
@@ -211,13 +211,13 @@ class Client(trio.abc.AsyncResource):
             adresse_fonction: List[str],
             args: Dict[str, any],
             nom_arg_fonction: str
-    ) -> Union[Callable[[], None], Dict[str, Callable[[Any], None]]]:
+    ) -> Union[Callable[[], Awaitable[None]], Dict[str, Callable[[Any], Awaitable[None]]]]:
 
         f = args.pop(nom_arg_fonction)
         args = {c: v for c, v in args.items() if not callable(v)}
         if any(callable(v) for v in args.values()):
             soimême._erreur("Plus d'un argument est une fonction.")
-            return lambda: None
+            return fais_rien_asynchrone
 
         message = {
             "type": "suivre",
@@ -249,13 +249,13 @@ class Client(trio.abc.AsyncResource):
 
         await soimême._envoyer_message(message)
 
-        def f_oublier():
+        async def f_oublier():
             print("f oublier", id_)
             message_oublier = {
                 "type": "oublier",
                 "id": id_,
             }
-            soimême.pouponnière.start_soon(soimême._envoyer_message, message_oublier)
+            await soimême._envoyer_message(message_oublier)
             context.cancel()
 
         fonctions_retour = await soimême._attendre_message(id_, soimême.canal_réception.clone())
@@ -300,8 +300,8 @@ class Client(trio.abc.AsyncResource):
 
                 class annuler(object):
                     @staticmethod
-                    def cancel():
-                        f_oublier()
+                    async def cancel():
+                        await f_oublier()
                         _context.cancel()
 
                 task_status.started(annuler)

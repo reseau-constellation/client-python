@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, TypedDict, Dict, List, Callable
+from typing import Any, TypedDict, Dict, List
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -27,6 +27,10 @@ def fais_rien() -> None:
     pass
 
 
+async def fais_rien_asynchrone() -> None:
+    pass
+
+
 async def une_fois(f_suivre, pouponnière: trio.Nursery) -> Any:
     canal_envoie, canal_réception = trio.open_memory_channel(0)
 
@@ -38,7 +42,7 @@ async def une_fois(f_suivre, pouponnière: trio.Nursery) -> Any:
 
     async with canal_réception:
         async for message in canal_réception:
-            f_oublier()
+            await f_oublier()
             return message
 
 
