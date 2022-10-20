@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from typing import Any, TypedDict, Dict, List
 from typing import TYPE_CHECKING
 
@@ -38,11 +39,14 @@ async def une_fois(f_suivre, pouponnière: trio.Nursery) -> Any:
         async with canal_envoie:
             await canal_envoie.send(résultat)
 
-    f_oublier = (await pouponnière.start(f_suivre, f_réception)).cancel
+    f_oublier = await pouponnière.start(f_suivre, f_réception)
 
     async with canal_réception:
         async for message in canal_réception:
-            await f_oublier()
+            if inspect.iscoroutinefunction(f_oublier):
+                await f_oublier()
+            else:
+                f_oublier()
             return message
 
 

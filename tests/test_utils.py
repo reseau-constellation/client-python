@@ -22,12 +22,7 @@ class TestUtils(TestCase):
             async def f_async(f, task_status=trio.TASK_STATUS_IGNORED):
                 with trio.CancelScope() as _context:
 
-                    class annuler(object):
-                        @staticmethod
-                        async def cancel():
-                            _context.cancel()
-
-                    task_status.started(annuler)
+                    task_status.started(_context.cancel)
                     await f(1)
                     await f(2)
 
