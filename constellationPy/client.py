@@ -260,10 +260,23 @@ class Client(trio.abc.AsyncResource):
             context.cancel()
 
         fonctions_retour = await soimême._attendre_message(id_, soimême.canal_réception.clone())
+        print("fonctions_retour", fonctions_retour)
+
+        def générer_f_retour(nom: str):
+            def f_retour(*args_):
+                message_retour = {
+                    "type": "retour",
+                    "id": id_,
+                    "fonction": nom,
+                    "args": args_
+                }
+                soimême.pouponnière.start_soon(soimême._envoyer_message, message_retour)
+            return f_retour
+
         if "résultat" in fonctions_retour and fonctions_retour["résultat"]:
             return {
                 "fOublier": f_oublier,
-                **{f: lambda args_: f(args_) for f in fonctions_retour}
+                **{fn: générer_f_retour(fn) for fn in fonctions_retour}
             }
         return f_oublier
 
