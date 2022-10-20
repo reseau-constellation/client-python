@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import json
 import pprint
 from contextlib import asynccontextmanager
@@ -240,7 +241,10 @@ class Client(trio.abc.AsyncResource):
                         if val["type"] == "suivre":
                             if "id" in val and val["id"] == id_:
                                 print("message suivi reçu !", val["résultat"])
-                                f(val["résultat"])
+                                if inspect.iscoroutinefunction(f):
+                                    await f(val["résultat"])
+                                else:
+                                    f(val["résultat"])
 
         context = await soimême.pouponnière.start(_suiveur, soimême.canal_réception.clone())
 
@@ -278,8 +282,10 @@ class Client(trio.abc.AsyncResource):
                     return message
 
     async def obt_données_tableau(soimême, id_tableau: str):
-        async def f_async(f):
-            return await soimême.tableaux.suivre_données(id_tableau=id_tableau, f=f)
+        async def f_async(f, task_status=trio.TASK_STATUS_IGNORED):
+            with trio.CancelScope() as _context:
+                task_status.started(_context)
+                f_oublier = await soimême.tableaux.suivre_données(id_tableau=id_tableau, f=f)
 
         return await une_fois(f_async, soimême.pouponnière)
 
