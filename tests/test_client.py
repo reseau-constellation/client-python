@@ -133,7 +133,6 @@ class TestClient(TestCase):
             pouponnière.start_soon(coroutine_client, pouponnière, canal_envoie_erreur)
             pouponnière.start_soon(coroutine_erreurs, canal_reçoit_erreur)
 
-        print(erreurs)
         soimême.assertEqual(len(erreurs), 1)
 
     @classmethod
