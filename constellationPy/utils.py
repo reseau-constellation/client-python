@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import inspect
-from typing import Any, TypedDict, Dict, List
+from typing import Any, TypedDict, Dict, List, Callable, Coroutine
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -32,7 +32,10 @@ async def fais_rien_asynchrone() -> None:
     pass
 
 
-async def une_fois(f_suivre, pouponnière: trio.Nursery) -> Any:
+async def une_fois(
+        f_suivre: Callable[[Callable[[Any, str], None]], Coroutine],
+        pouponnière: trio.Nursery
+) -> Any:
     canal_envoie, canal_réception = trio.open_memory_channel(0)
 
     async def f_réception(résultat):
@@ -48,6 +51,23 @@ async def une_fois(f_suivre, pouponnière: trio.Nursery) -> Any:
             else:
                 f_oublier()
             return message
+
+
+async def une_fois_avec_oublier(
+        f_suivi: Callable[[Callable[[Any], None]], Coroutine[None, None]],
+        pouponnière: trio.Nursery
+) -> Any:
+    async def f_async(f, task_status=trio.TASK_STATUS_IGNORED):
+        with trio.CancelScope() as _context:
+            f_oublier = await f_suivi(f)
+
+            async def annuler():
+                await f_oublier()
+                _context.cancel()
+
+            task_status.started(annuler)
+
+    return await une_fois(f_async, pouponnière)
 
 
 type_élément = TypedDict("type_élément", {"empreinte": str, "données": Dict[str, Any]})

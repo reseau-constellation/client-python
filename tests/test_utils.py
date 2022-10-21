@@ -1,11 +1,11 @@
 from unittest import TestCase
 
 import pandas as pd
-import trio
 import pandas.testing as pdt
+import trio
 
 from constellationPy.utils import à_chameau, à_kebab, une_fois, tableau_à_pandas, pandas_à_constellation, \
-    fais_rien_asynchrone
+    une_fois_avec_oublier
 
 
 class TestUtils(TestCase):
@@ -21,13 +21,26 @@ class TestUtils(TestCase):
         async with trio.open_nursery() as pouponnière:
             async def f_async(f, task_status=trio.TASK_STATUS_IGNORED):
                 with trio.CancelScope() as _context:
-
                     task_status.started(_context.cancel)
                     await f(1)
                     await f(2)
 
             x = await une_fois(f_async, pouponnière)
         soimême.assertEqual(x, 1)
+
+    async def test_une_fois_avec_oublier(soimême):
+        oubl = {"ié": False}
+        async with trio.open_nursery() as pouponnière:
+            async def f_suivi(f):
+                async def f_oublier():
+                    oubl["ié"] = True
+                pouponnière.start_soon(f, 123)
+                return f_oublier
+
+            x = await une_fois_avec_oublier(f_suivi, pouponnière=pouponnière)
+
+        soimême.assertEqual(x, 123)
+        soimême.assertTrue(oubl["ié"])
 
     def test_tableau_à_pandas(soimême):
         tableau = [{"empreinte": "abc", "données": {"a": 1, "b": 2}}, {"empreinte": "def", "données": {"a": 3}}]

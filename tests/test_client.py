@@ -59,7 +59,7 @@ class TestClient(TestCase):
             await client.changer_valeur_suivie(x=3)
             soimême.assertEqual(résultat["x"], 3)
 
-            oublier()
+            await oublier()
             await client.changer_valeur_suivie(x=2)
             soimême.assertNotEqual(résultat["x"], 2)
 

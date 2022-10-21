@@ -3,7 +3,7 @@ from typing import Optional, List
 import trio
 
 from .client import ouvrir_client
-from .utils import à_kebab, une_fois, à_chameau
+from .utils import à_kebab, une_fois, une_fois_avec_oublier
 
 
 class ClientSync(object):
@@ -29,7 +29,7 @@ class ClientSync(object):
                         argsmc[nom_arg_fonction] = f
                         return await f_client(**argsmc)
 
-                    return await une_fois(f_pour_une_fois, client.pouponnière)
+                    return await une_fois_avec_oublier(f_pour_une_fois, client.pouponnière)
 
                 return await f_client(**argsmc)
 

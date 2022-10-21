@@ -3,7 +3,6 @@ from __future__ import annotations
 import inspect
 import json
 from contextlib import asynccontextmanager
-from datetime import datetime
 from typing import Optional, List, Any, Callable, Dict, Union, Tuple, Awaitable
 from uuid import uuid4
 
@@ -12,7 +11,7 @@ import trio_websocket as tw
 
 from .const import LIEN_RAPPORTAGE_ERREURS
 from .serveur import obtenir_contexte
-from .utils import à_chameau, à_kebab, une_fois, fais_rien_asynchrone
+from .utils import à_chameau, à_kebab, une_fois, fais_rien_asynchrone, une_fois_avec_oublier
 
 
 # Idée de https://stackoverflow.com/questions/48282841/in-trio-how-can-i-have-a-background-task-that-lives-as-long-as-my-object-does
@@ -137,12 +136,12 @@ class Client(trio.abc.AsyncResource):
                     except tw.ConnectionClosed:
                         break
                     m_json = json.loads(message)
-                    print("Message reçu : ", m_json)
+                    print("Message reçu par écouter: ", m_json)
                     type_ = m_json["type"]
 
                     if type_ == "suivre":
-                        m = {**m_json, "résultat": m_json["données"]}
-                        await canal_envoie.send(json.dumps(m))
+                        m_json["résultat"] = m_json.pop("données")
+                        await canal_envoie.send(json.dumps(m_json))
 
                     elif type_ == "suivrePrêt":
                         await canal_envoie.send(json.dumps(m_json))
@@ -229,6 +228,7 @@ class Client(trio.abc.AsyncResource):
 
         # https://stackoverflow.com/questions/60674136/python-how-to-cancel-a-specific-task-spawned-by-a-nursery-in-python-trio
         # https://trio.readthedocs.io/en/stable/reference-core.html#trio.CancelScope
+        prêt = {"statut": False}
         async def _suiveur(canal, task_status=trio.TASK_STATUS_IGNORED):
             print("suiveur")
             with trio.CancelScope() as _context:
@@ -237,20 +237,20 @@ class Client(trio.abc.AsyncResource):
                     async for val in canal:
                         val = json.loads(val)
                         print("val", val)
-                        if val["type"] == "suivre":
-                            if "id" in val and val["id"] == id_:
+                        if "id" in val and val["id"] == id_:
+                            if val["type"] == "suivrePrêt":
+                                prêt["statut"] = val
+                            elif val["type"] == "suivre":
                                 print("message suivi reçu !", val["résultat"])
                                 if inspect.iscoroutinefunction(f):
-                                    await f(val["résultat"])
+                                    soimême.pouponnière.start_soon(f, val["résultat"])
                                 else:
                                     f(val["résultat"])
 
         context = await soimême.pouponnière.start(_suiveur, soimême.canal_réception.clone())
-
         await soimême._envoyer_message(message)
 
         async def f_oublier():
-            print("f oublier", id_)
             message_oublier = {
                 "type": "oublier",
                 "id": id_,
@@ -258,7 +258,13 @@ class Client(trio.abc.AsyncResource):
             await soimême._envoyer_message(message_oublier)
             context.cancel()
 
-        fonctions_retour = await soimême._attendre_message(id_, soimême.canal_réception.clone())
+        # await trio.sleep(2)
+        while not prêt["statut"]:
+            await trio.sleep(0.1)  # C'est laid mais ça fonctionne pour l'instant
+            # await soimême._attendre_message(id_, soimême.canal_réception.clone(), "suivrePrêt")
+        print(prêt)
+        fonctions_retour = prêt["statut"]
+        print("fonctions_retour", fonctions_retour)
 
         def générer_f_retour(nom: str):
             def f_retour(*args_):
@@ -272,39 +278,31 @@ class Client(trio.abc.AsyncResource):
 
             return f_retour
 
-        if "résultat" in fonctions_retour and fonctions_retour["résultat"]:
+        if "fonctions" in fonctions_retour and fonctions_retour["fonctions"]:
+            print("fonctions_retour", fonctions_retour)
             return {
                 "fOublier": f_oublier,
                 **{fn: générer_f_retour(fn) for fn in fonctions_retour}
             }
         return f_oublier
 
-    async def _attendre_message(soimême, id_: str, canal_réception):
+    async def _attendre_message(soimême, id_: str, canal_réception, type_: str = None):
         print("On attend le message : ", id_)
-        avant = datetime.now()
         async with canal_réception:
             async for val in canal_réception:
                 message = json.loads(val)
                 print("On a reçu un message : ", message)
                 if "id" in message and message["id"] == id_:
-                    temps = datetime.now() - avant
-                    print(f"Message {id_} reçu en {temps} secondes.")
                     if message["type"] == "erreur":
                         soimême._erreur(message["erreur"])
-                    return message
+                    if not type_ or message["type"] == type_:
+                        return message
 
     async def obt_données_tableau(soimême, id_tableau: str):
-        async def f_async(f, task_status=trio.TASK_STATUS_IGNORED):
-            with trio.CancelScope() as _context:
-                f_oublier = await soimême.tableaux.suivre_données(id_tableau=id_tableau, f=f)
+        async def f_suivi(f):
+            return await soimême.tableaux.suivre_données(id_tableau=id_tableau, f=f)
 
-                async def annuler():
-                    await f_oublier()
-                    _context.cancel()
-
-                task_status.started(annuler)
-
-        return await une_fois(f_async, soimême.pouponnière)
+        return await une_fois_avec_oublier(f_suivi, soimême.pouponnière)
 
     async def obt_données_réseau(soimême, motclef_unique: str, nom_unique_tableau: str):
         async def f_async(f):

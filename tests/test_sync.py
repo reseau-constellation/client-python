@@ -1,6 +1,6 @@
 import unittest
 
-from constellationPy import ClientSync
+from constellationPy import ClientSync, fais_rien
 from tests.utils import Serveur, VRAI_SERVEUR
 
 
@@ -32,7 +32,9 @@ class TestSync(unittest.TestCase):
 
     @unittest.skipIf(VRAI_SERVEUR, "Test uniquement pour le faux serveur")
     def test_suivre_sync(soimême):
-        raise NotImplementedError
+        soimême.client.changer_valeur_suivie(x=3)
+        résultat = soimême.client.fonction_suivi(f=fais_rien)
+        soimême.assertEqual(résultat, 3)
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur")
     def test_obt_données_tableau(soimême):
