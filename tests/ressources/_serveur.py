@@ -19,7 +19,7 @@ def erreur_fonction_non_définie(message):
     return {
         "type": "erreur",
         "id": message["id"],
-        "erreur": f"Fonction `Client.{'.'.join(message['fonction'])}()` n'existe pas ou n'est pas une fontion."
+        "erreur": f"Fonction `Client.{'.'.join(message['fonction'])}()` n'existe pas ou n'est pas une fonction."
     }
 
 
