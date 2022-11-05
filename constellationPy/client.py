@@ -11,7 +11,7 @@ import trio_websocket as tw
 
 from .const import LIEN_RAPPORTAGE_ERREURS
 from .serveur import obtenir_contexte
-from .utils import à_chameau, à_kebab, une_fois, fais_rien_asynchrone, une_fois_avec_oublier
+from .utils import à_chameau, à_kebab, fais_rien_asynchrone, une_fois
 
 
 # Idée de https://stackoverflow.com/questions/48282841/in-trio-how-can-i-have-a-background-task-that-lives-as-long-as-my-object-does
@@ -229,6 +229,7 @@ class Client(trio.abc.AsyncResource):
         # https://stackoverflow.com/questions/60674136/python-how-to-cancel-a-specific-task-spawned-by-a-nursery-in-python-trio
         # https://trio.readthedocs.io/en/stable/reference-core.html#trio.CancelScope
         prêt = {"statut": False}
+
         async def _suiveur(canal, task_status=trio.TASK_STATUS_IGNORED):
             print("suiveur")
             with trio.CancelScope() as _context:
@@ -302,7 +303,7 @@ class Client(trio.abc.AsyncResource):
         async def f_suivi(f):
             return await soimême.tableaux.suivre_données(id_tableau=id_tableau, f=f)
 
-        return await une_fois_avec_oublier(f_suivi, soimême.pouponnière)
+        return await une_fois(f_suivi, soimême.pouponnière)
 
     async def obt_données_réseau(soimême, motclef_unique: str, nom_unique_tableau: str):
         async def f_async(f):

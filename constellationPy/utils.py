@@ -32,7 +32,7 @@ async def fais_rien_asynchrone() -> None:
     pass
 
 
-async def une_fois(
+async def une_fois_sans_oublier(
         f_suivre: Callable[[Callable[[Any, str], None]], Coroutine],
         pouponnière: trio.Nursery
 ) -> Any:
@@ -53,7 +53,7 @@ async def une_fois(
             return message
 
 
-async def une_fois_avec_oublier(
+async def une_fois(
         f_suivi: Callable[[Callable[[Any], None]], Coroutine[None, None]],
         pouponnière: trio.Nursery
 ) -> Any:
@@ -67,7 +67,7 @@ async def une_fois_avec_oublier(
 
             task_status.started(annuler)
 
-    return await une_fois(f_async, pouponnière)
+    return await une_fois_sans_oublier(f_async, pouponnière)
 
 
 type_élément = TypedDict("type_élément", {"empreinte": str, "données": Dict[str, Any]})

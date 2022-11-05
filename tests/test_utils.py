@@ -4,8 +4,8 @@ import pandas as pd
 import pandas.testing as pdt
 import trio
 
-from constellationPy.utils import à_chameau, à_kebab, une_fois, tableau_à_pandas, pandas_à_constellation, \
-    une_fois_avec_oublier
+from constellationPy.utils import à_chameau, à_kebab, une_fois_sans_oublier, tableau_à_pandas, pandas_à_constellation, \
+    une_fois
 
 
 class TestUtils(TestCase):
@@ -25,7 +25,7 @@ class TestUtils(TestCase):
                     await f(1)
                     await f(2)
 
-            x = await une_fois(f_async, pouponnière)
+            x = await une_fois_sans_oublier(f_async, pouponnière)
         soimême.assertEqual(x, 1)
 
     async def test_une_fois_avec_oublier(soimême):
@@ -34,10 +34,11 @@ class TestUtils(TestCase):
             async def f_suivi(f):
                 async def f_oublier():
                     oubl["ié"] = True
+
                 pouponnière.start_soon(f, 123)
                 return f_oublier
 
-            x = await une_fois_avec_oublier(f_suivi, pouponnière=pouponnière)
+            x = await une_fois(f_suivi, pouponnière=pouponnière)
 
         soimême.assertEqual(x, 123)
         soimême.assertTrue(oubl["ié"])

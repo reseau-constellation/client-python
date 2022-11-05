@@ -108,10 +108,29 @@ class TestClient(TestCase):
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     async def test_obt_données_tableau_noms_colonnes(soimême):
         raise NotImplementedError
+        async with ouvrir_client() as client:
+            id_bd = await client.bds.créerBd(licence="ODBl-1.0")
+            id_tableau = await client.bds.ajouterTableauBd(id_bd=id_bd)
+
+            id_var = await client.variables.créerVariable(catégorie="numérique")
+            id_col = await client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_variable=id_var)
+            id_élément = await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
+
+            données = await client.obt_données_tableau(id_tableau=id_tableau, langues=["த", "fr"])
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     async def test_obt_données_tableau_format_pandas(soimême):
         raise NotImplementedError
+
+        async with ouvrir_client() as client:
+            id_bd = await client.bds.créerBd(licence="ODBl-1.0")
+            id_tableau = await client.bds.ajouterTableauBd(id_bd=id_bd)
+
+            id_var = await client.variables.créerVariable(catégorie="numérique")
+            id_col = await client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_variable=id_var)
+            id_élément = await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
+
+            données = await client.obt_données_tableau(id_tableau=id_tableau, langues=["த", "fr"], format="pandas")
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     async def test_obt_données_réseau(soimême):
