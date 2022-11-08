@@ -225,10 +225,10 @@ class Client(trio.abc.AsyncResource):
             "nomArgFonction": nom_arg_fonction
         }
 
-        # https://stackoverflow.com/questions/60674136/python-how-to-cancel-a-specific-task-spawned-by-a-nursery-in-python-trio
-        # https://trio.readthedocs.io/en/stable/reference-core.html#trio.CancelScope
         prêt = {"statut": False}
 
+        # https://stackoverflow.com/questions/60674136/python-how-to-cancel-a-specific-task-spawned-by-a-nursery-in-python-trio
+        # https://trio.readthedocs.io/en/stable/reference-core.html#trio.CancelScope
         async def _suiveur(canal, task_status=trio.TASK_STATUS_IGNORED):
             print("suiveur")
             with trio.CancelScope() as _context:

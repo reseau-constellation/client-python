@@ -97,7 +97,7 @@ def mettre_serveur_à_jour(exe: TypeExe = EXE_CONSTL):
 
 def obt_version_serveur(exe: TypeExe = EXE_CONSTL) -> Optional[Version]:
     try:
-        if v := _obt_version(exe):
+        if v := _obt_version(exe, "version"):
             return Version(v)
     except ChildProcessError as é:
         if f"Error: Cannot find module '{PAQUET_IPA}'" in str(é):
@@ -166,7 +166,7 @@ def mettre_ipa_à_jour(exe: TypeExe = EXE_CONSTL):
 
 def ipa_est_installée(exe: TypeExe = EXE_CONSTL) -> bool:
     try:
-        _obt_version(exe)
+        _obt_version(exe, "version")
         return True
     except ChildProcessError as é:
         if f"Error: Cannot find module '{PAQUET_IPA}'" in str(é):
