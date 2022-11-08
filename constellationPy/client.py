@@ -136,7 +136,6 @@ class Client(trio.abc.AsyncResource):
                     except tw.ConnectionClosed:
                         break
                     m_json = json.loads(message)
-                    print("Message reçu par écouter: ", m_json)
                     type_ = m_json["type"]
 
                     if type_ == "suivre":
@@ -237,7 +236,7 @@ class Client(trio.abc.AsyncResource):
                 async with canal:
                     async for val in canal:
                         val = json.loads(val)
-                        print("val", val)
+                        print("suiveur a reçu val", val)
                         if "id" in val and val["id"] == id_:
                             if val["type"] == "suivrePrêt":
                                 prêt["statut"] = val
@@ -259,31 +258,30 @@ class Client(trio.abc.AsyncResource):
             await soimême._envoyer_message(message_oublier)
             context.cancel()
 
-        # await trio.sleep(2)
         while not prêt["statut"]:
             await trio.sleep(0.1)  # C'est laid mais ça fonctionne pour l'instant
             # await soimême._attendre_message(id_, soimême.canal_réception.clone(), "suivrePrêt")
-        print(prêt)
-        fonctions_retour = prêt["statut"]
-        print("fonctions_retour", fonctions_retour)
+
+        valeur_retour = prêt["statut"]
+        print("valeur_retour", valeur_retour)
 
         def générer_f_retour(nom: str):
-            def f_retour(*args_):
+            async def f_retour(*args_):
+                print("f_retour", nom, args_)
                 message_retour = {
                     "type": "retour",
                     "id": id_,
                     "fonction": nom,
                     "args": args_
                 }
-                soimême.pouponnière.start_soon(soimême._envoyer_message, message_retour)
+                await soimême._envoyer_message(message_retour)
 
             return f_retour
 
-        if "fonctions" in fonctions_retour and fonctions_retour["fonctions"]:
-            print("fonctions_retour", fonctions_retour)
+        if "fonctions" in valeur_retour and valeur_retour["fonctions"]:
             return {
                 "fOublier": f_oublier,
-                **{fn: générer_f_retour(fn) for fn in fonctions_retour}
+                **{fn: générer_f_retour(fn) for fn in valeur_retour["fonctions"]}
             }
         return f_oublier
 

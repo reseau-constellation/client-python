@@ -52,8 +52,41 @@ class Suiveur(object):
                 "données": soimême.valeur
             }, ws)
 
+    def __contains__(soimême, item):
+        return item in soimême.connexions
+
+
+class Chercheur(object):
+    def __init__(soimême):
+        soimême.connexions = {}
+
+    async def rechercher(soimême, id_, taille, ws):
+        soimême.connexions[id_] = ws
+        await envoyer_message_à_ws({
+            "type": "suivre",
+            "id": id_,
+            "données": list(range(taille))
+        }, ws)
+
+    def oublier(soimême, id):
+        soimême.connexions.pop(id)
+
+    async def changerTaille(soimême, id_: str, taille: int):
+        if id_ not in soimême.connexions:
+            return  # Si déjà annulé
+        ws = soimême.connexions[id_]
+        await envoyer_message_à_ws({
+            "type": "suivre",
+            "id": id_,
+            "données": list(range(taille))
+        }, ws)
+
+    def __contains__(soimême, item):
+        return item in soimême.connexions
+
 
 suiveur = Suiveur()
+chercheur = Chercheur()
 
 
 async def traiter_message(message, ws: WebSocketConnection):
@@ -68,12 +101,31 @@ async def traiter_message(message, ws: WebSocketConnection):
                 "id": message["id"]
             }, ws)
             await suiveur.suivre(message["id"], ws)
+        elif fonction == ("fonctionRecherche",):
+            await envoyer_message_à_ws({
+                "type": "suivrePrêt",
+                "id": message["id"],
+                "fonctions": ["fChangerN"]
+            }, ws)
+            await chercheur.rechercher(message["id"], taille=message["args"]["nRésultatsDésirés"], ws=ws)
         else:
             await envoyer_message_à_ws(erreur_fonction_non_définie(message), ws)
 
+    elif type_ == "retour":
+        id_ = message["id"]
+        fonction = message["fonction"]
+        if fonction == "fChangerN":
+            await chercheur.changerTaille(id_, taille=message["args"][0])
+
     elif type_ == "oublier":
         id_ = message["id"]
-        suiveur.oublier(id_)
+        if id_ in suiveur:
+            suiveur.oublier(id_)
+        elif id_ in chercheur:
+            chercheur.oublier(id_)
+        else:
+            raise ValueError(id_ + " n'est pas suivi.")
+
     elif type_ == "action":
         fonction = tuple(message["fonction"])
         if fonction == ("obtIdOrbite",):

@@ -141,7 +141,24 @@ class TestClient(TestCase):
 
     @unittest.skipIf(VRAI_SERVEUR, "Test uniquement pour le faux serveur.")
     async def test_fonctions_retour(soimême):
-        raise NotImplementedError
+        résultat = {}
+
+        def traiter_résultat(x):
+            résultat["x"] = x
+
+        async with ouvrir_client() as client:
+            fs = await client.fonction_recherche(f=traiter_résultat, nRésultatsDésirés=3)
+            soimême.assertListEqual(résultat["x"], list(range(3)))
+
+            await fs["fChangerN"](6)
+            await trio.sleep(.1)
+            soimême.assertListEqual(résultat["x"], list(range(6)))
+
+            # Plus de changements après fOublier
+            await fs["fOublier"]()
+            await fs["fChangerN"](3)
+            await trio.sleep(.1)
+            soimême.assertListEqual(résultat["x"], list(range(6)))
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     async def test_recherche(soimême):
