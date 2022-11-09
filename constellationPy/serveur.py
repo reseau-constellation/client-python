@@ -79,7 +79,7 @@ def obtenir_contexte() -> Optional[int]:
 
 def mettre_constellation_à_jour(exe: TypeExe = EXE_CONSTL):
     print("Mise à jour de Constellation")
-    assurer_npm_yarn_installés()
+    assurer_npm_pnpm_installés()
 
     mettre_serveur_à_jour(exe)
     mettre_ipa_à_jour(exe)
@@ -144,7 +144,7 @@ def _obt_version(commande: TypeExe, arg="-v") -> Optional[str]:
 
 
 def installer_serveur(version: Version):
-    installer_de_yarn(PAQUET_SERVEUR, version)
+    installer_de_pnpm(PAQUET_SERVEUR, version)
 
 
 def mettre_ipa_à_jour(exe: TypeExe = EXE_CONSTL):
@@ -176,7 +176,7 @@ def ipa_est_installée(exe: TypeExe = EXE_CONSTL) -> bool:
 
 
 def installer_ipa(version: Union[Version, SimpleSpec, str] = "latest"):
-    installer_de_yarn(PAQUET_IPA, version)
+    installer_de_pnpm(PAQUET_IPA, version)
 
 
 def désinstaller_constellation():
@@ -197,11 +197,11 @@ def désinstaller_constellation():
 
 
 def désinstaller_ipa():
-    désinstaller_de_yarn(PAQUET_IPA)
+    désinstaller_de_pnpm(PAQUET_IPA)
 
 
 def désinstaller_serveur():
-    désinstaller_de_yarn(PAQUET_SERVEUR)
+    désinstaller_de_pnpm(PAQUET_SERVEUR)
 
 
 def obt_version_ipa_plus_récente_compatible(exe: TypeExe = EXE_CONSTL, présente: Optional[Version] = None) -> Version:
@@ -255,7 +255,7 @@ def vérifier_installation_constellation(exe: TypeExe = EXE_CONSTL):
     return _vérifier_installation(exe if isinstance(exe, str) else tuple(exe))
 
 
-def assurer_npm_yarn_installés():
+def assurer_npm_pnpm_installés():
     version_npm = obt_version_npm()
     if not version_npm:
         print("Installation de NPM")
@@ -265,13 +265,13 @@ def assurer_npm_yarn_installés():
             # Si on n'a pas réussi à l'installer pour vous, vous devrez le faire manuellement.
             raise FileNotFoundError("Vous devez installer Node.js au https://nodejs.org/fr/download/.")
 
-    version_yarn = obt_version_yarn()
-    if not version_yarn:
-        print("Installation de Yarn")
-        résultat_yarn = subprocess.run(["npm", "install", "-g", "yarn"], capture_output=True)
-        if résultat_yarn.returncode != 0:
+    version_pnpm = obt_version_pnpm()
+    if not version_pnpm:
+        print("Installation de PNPM")
+        résultat_pnpm = subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True)
+        if résultat_pnpm.returncode != 0:
             raise ConnectionError(
-                f"Erreur d'installation de Yarn :\n\t{résultat_yarn.stderr.decode()}"
+                f"Erreur d'installation de PNPM :\n\t{résultat_pnpm.stderr.decode()}"
             )
 
 
@@ -297,34 +297,34 @@ def _installer_nodejs():
     raise OSError(système_opératoire)
 
 
-def installer_de_yarn(paquet: str, version: Union[Version, SimpleSpec, str] = "latest"):
-    assurer_npm_yarn_installés()
-    résultat_yarn = subprocess.run(
-        ["yarn", "global", "add", paquet + "@" + str(version)],
+def installer_de_pnpm(paquet: str, version: Union[Version, SimpleSpec, str] = "latest"):
+    assurer_npm_pnpm_installés()
+    résultat_pnpm = subprocess.run(
+        ["pnpm", "add", "-g", paquet + "@" + str(version)],
         capture_output=True
     )
 
-    if résultat_yarn.returncode != 0:
+    if résultat_pnpm.returncode != 0:
         raise ConnectionError(
-            f"Erreur d'installation du paquet {paquet} :\n\t{résultat_yarn.stderr.decode()}"
+            f"Erreur d'installation du paquet {paquet} :\n\t{résultat_pnpm.stderr.decode()}"
         )
 
 
-def désinstaller_de_yarn(paquet):
-    assurer_npm_yarn_installés()
-    résultat_constellation = subprocess.run(
-        ["yarn", "global", "remove", paquet],
+def désinstaller_de_pnpm(paquet):
+    assurer_npm_pnpm_installés()
+    résultat_pnpm = subprocess.run(
+        ["pnpm", "remove", "-g", paquet],
         capture_output=True
     )
 
-    if résultat_constellation.returncode != 0:
+    if résultat_pnpm.returncode != 0:
         raise ConnectionError(
-            f"Erreur de désinstallation du paquet {paquet} :\n\t{résultat_constellation.stderr.decode()}"
+            f"Erreur de désinstallation du paquet {paquet} :\n\t{résultat_pnpm.stderr.decode()}"
         )
 
 
-def obt_version_yarn() -> Optional[str]:
-    return _obt_version("yarn")
+def obt_version_pnpm() -> Optional[str]:
+    return _obt_version("pnpm")
 
 
 def obt_version_npm() -> Optional[str]:
