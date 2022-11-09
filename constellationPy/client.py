@@ -11,7 +11,7 @@ import trio_websocket as tw
 
 from .const import LIEN_RAPPORTAGE_ERREURS
 from .serveur import obtenir_contexte
-from .utils import à_chameau, à_kebab, fais_rien_asynchrone, une_fois
+from .utils import à_chameau, à_kebab, fais_rien_asynchrone, une_fois, tableau_à_pandas
 
 
 # Idée de https://stackoverflow.com/questions/48282841/in-trio-how-can-i-have-a-background-task-that-lives-as-long-as-my-object-does
@@ -252,8 +252,9 @@ class Client(trio.abc.AsyncResource):
 
         async def f_oublier():
             message_oublier = {
-                "type": "oublier",
+                "type": "retour",
                 "id": id_,
+                "fonction": "fOublier"
             }
             await soimême._envoyer_message(message_oublier)
             context.cancel()
@@ -297,11 +298,51 @@ class Client(trio.abc.AsyncResource):
                     if not type_ or message["type"] == type_:
                         return message
 
-    async def obt_données_tableau(soimême, id_tableau: str):
+    async def obt_données_tableau(
+            soimême,
+            id_tableau: str,
+            langues: Optional[str | list[str]] = None,
+            formatDonnées="constellation",
+    ):
         async def f_suivi(f):
             return await soimême.tableaux.suivre_données(id_tableau=id_tableau, f=f)
 
-        return await une_fois(f_suivi, soimême.pouponnière)
+        données = await une_fois(f_suivi, soimême.pouponnière)
+
+        if langues:
+            langues = [langues] if isinstance(langues, str) else langues
+
+            async def f_suivi_variables(f):
+                return await soimême.tableaux.suivreVariables(
+                    idTableau=id_tableau, f=f
+                )
+            variables = await une_fois(f_suivi_variables, soimême.pouponnière)
+
+            async def f_suivi_colonnes(f):
+                return await soimême.tableaux.suivreColonnes(
+                    idTableau=id_tableau, f=f
+                )
+            colonnes = await une_fois(f_suivi_colonnes, soimême.pouponnière)
+
+            for id_variable in variables:
+                async def f_suivi_nom_variable(f):
+                    return await soimême.variables.suivre_noms_variable(
+                        id=id_variable, f=f
+                    )
+
+                noms_variable = await une_fois(f_suivi_nom_variable, soimême.pouponnière)
+                meilleure_langue = next((l for l in langues if l in noms_variable), None)
+                if meilleure_langue:
+                    id_col = next(c["id"] for c in colonnes if c["variable"] == id_variable)
+                    for rangée in données:
+                        rangée["données"][noms_variable[meilleure_langue]] = rangée["données"].pop(id_col)
+
+        if formatDonnées.lower() == "pandas":
+            return tableau_à_pandas(données)
+        elif formatDonnées.lower() == "constellation":
+            return données
+        else:
+            raise ValueError(formatDonnées)
 
     async def obt_données_réseau(soimême, motclef_unique: str, nom_unique_tableau: str):
         async def f_async(f):

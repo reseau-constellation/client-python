@@ -1,5 +1,8 @@
 import unittest
 
+import pandas as pd
+import pandas.testing as pdt
+
 from constellationPy import ClientSync, fais_rien
 from tests.utils import Serveur, VRAI_SERVEUR
 
@@ -53,6 +56,36 @@ class TestSync(unittest.TestCase):
                 }, 'empreinte': id_élément
             }
         ])
+
+    @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
+    def test_obt_données_tableau_noms_variables(soimême):
+        id_bd = soimême.client.bds.créerBd(licence="ODBl-1.0")
+        id_tableau = soimême.client.bds.ajouterTableauBd(id_bd=id_bd)
+
+        id_var = soimême.client.variables.créerVariable(catégorie="numérique")
+        id_col = soimême.client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_variable=id_var)
+        soimême.client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
+
+        soimême.client.variables.ajouter_noms_variable(id=id_var, noms={"fr": "Précipitation"})
+
+        données = soimême.client.obt_données_tableau(id_tableau=id_tableau, langues=["த", "fr"], formatDonnées="pandas")
+        print(données)
+        réf = pd.DataFrame({"Précipitation": [123], "id": données["id"]})
+        pdt.assert_frame_equal(données.sort_index(axis=1), réf.sort_index(axis=1))
+
+    @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
+    def test_obt_données_tableau_format_pandas(soimême):
+        id_bd = soimême.client.bds.créerBd(licence="ODBl-1.0")
+        id_tableau = soimême.client.bds.ajouterTableauBd(id_bd=id_bd)
+
+        id_var = soimême.client.variables.créerVariable(catégorie="numérique")
+        id_col = soimême.client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_variable=id_var)
+        soimême.client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
+
+        données = soimême.client.obt_données_tableau(id_tableau=id_tableau, formatDonnées="pandas")
+
+        réf = pd.DataFrame({id_col: [123], "id": données["id"]})
+        pdt.assert_frame_equal(données, réf)
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur")
     def test_obt_données_réseau(soimême):

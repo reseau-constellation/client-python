@@ -4,6 +4,8 @@ import unittest
 from os import path
 from unittest import TestCase
 
+import pandas as pd
+import pandas.testing as pdt
 import trio
 
 from constellationPy.client import ouvrir_client, Client
@@ -93,7 +95,7 @@ class TestClient(TestCase):
 
             id_var = await client.variables.créerVariable(catégorie="numérique")
             id_col = await client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_variable=id_var)
-            id_élément = await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
+            empreinte_élément = await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
 
             données = await client.obt_données_tableau(id_tableau=id_tableau)
 
@@ -101,26 +103,28 @@ class TestClient(TestCase):
             {
                 'données': {
                     id_col: 123, 'id': données[0]['données']['id']
-                }, 'empreinte': id_élément
+                }, 'empreinte': empreinte_élément
             }
         ])
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
-    async def test_obt_données_tableau_noms_colonnes(soimême):
-        raise NotImplementedError
+    async def test_obt_données_tableau_noms_variables(soimême):
         async with ouvrir_client() as client:
             id_bd = await client.bds.créerBd(licence="ODBl-1.0")
             id_tableau = await client.bds.ajouterTableauBd(id_bd=id_bd)
 
             id_var = await client.variables.créerVariable(catégorie="numérique")
             id_col = await client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_variable=id_var)
-            id_élément = await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
+            await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
+            await client.variables.ajouter_noms_variable(id=id_var, noms={"fr": "Précipitation"})
 
-            données = await client.obt_données_tableau(id_tableau=id_tableau, langues=["த", "fr"])
+            données = await client.obt_données_tableau(id_tableau=id_tableau, langues=["த", "fr"], formatDonnées="pandas")
+
+        réf = pd.DataFrame({"Précipitation": [123], "id": données["id"]})
+        pdt.assert_frame_equal(données.sort_index(axis=1), réf.sort_index(axis=1))
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     async def test_obt_données_tableau_format_pandas(soimême):
-        raise NotImplementedError
 
         async with ouvrir_client() as client:
             id_bd = await client.bds.créerBd(licence="ODBl-1.0")
@@ -128,9 +132,12 @@ class TestClient(TestCase):
 
             id_var = await client.variables.créerVariable(catégorie="numérique")
             id_col = await client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_variable=id_var)
-            id_élément = await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
+            await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
 
-            données = await client.obt_données_tableau(id_tableau=id_tableau, langues=["த", "fr"], format="pandas")
+            données = await client.obt_données_tableau(id_tableau=id_tableau, formatDonnées="pandas")
+
+        réf = pd.DataFrame({id_col: [123], "id": données["id"]})
+        pdt.assert_frame_equal(données, réf)
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     async def test_obt_données_réseau(soimême):
