@@ -169,7 +169,7 @@ def ipa_est_installée(exe: TypeExe = EXE_CONSTL) -> bool:
         _obt_version(exe, "version")
         return True
     except ChildProcessError as é:
-        if f"Error: Cannot find module '{PAQUET_IPA}'" in str(é):
+        if "ERR_MODULE_NOT_FOUND" in str(é) and PAQUET_IPA in str(é):
             return False
         else:
             raise é
