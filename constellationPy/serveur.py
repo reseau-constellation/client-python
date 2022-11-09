@@ -268,11 +268,11 @@ def assurer_npm_pnpm_installés():
     version_pnpm = obt_version_pnpm()
     if not version_pnpm:
         print("Installation de PNPM")
-        résultat_pnpm = subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True)
-        if résultat_pnpm.returncode != 0:
+        résultat_npm = subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True)
+        if résultat_npm.returncode != 0:
             raise ConnectionError(
-                f"Erreur d'installation de PNPM :\n\t{résultat_pnpm.stderr.decode()}"
-                f"\n\t{résultat_pnpm.stdout.decode()}"
+                f"Erreur d'installation de PNPM :\n\t{résultat_npm.stderr.decode()}"
+                f"\n\t{résultat_npm.stdout.decode()}"
             )
 
 
@@ -308,6 +308,7 @@ def installer_de_pnpm(paquet: str, version: Union[Version, SimpleSpec, str] = "l
     if résultat_pnpm.returncode != 0:
         raise ConnectionError(
             f"Erreur d'installation du paquet {paquet} :\n\t{résultat_pnpm.stderr.decode()}"
+            f"\n\t{résultat_pnpm.stdout.decode()}"
         )
 
 
