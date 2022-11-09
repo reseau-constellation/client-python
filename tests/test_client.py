@@ -118,7 +118,9 @@ class TestClient(TestCase):
             await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
             await client.variables.ajouter_noms_variable(id=id_var, noms={"fr": "Précipitation"})
 
-            données = await client.obt_données_tableau(id_tableau=id_tableau, langues=["த", "fr"], formatDonnées="pandas")
+            données = await client.obt_données_tableau(
+                id_tableau=id_tableau, langues=["த", "fr"], formatDonnées="pandas"
+            )
 
         réf = pd.DataFrame({"Précipitation": [123], "id": données["id"]})
         pdt.assert_frame_equal(données.sort_index(axis=1), réf.sort_index(axis=1))
