@@ -189,14 +189,15 @@ def v_constl():
     écrire_à_stdout("^1.0.0")
 
 
+@cli.command("version")
+def version():
+    écrire_à_stdout(V_SERVEUR_NÉCESSAIRE.strip("^"))
+    return
+
+
 @cli.command("lancer")
 @click.option("-p", '--port', default=None)
-@click.option("-v", '--version/--sans-version', default=False)
-def lancer(port, version):
-    if version:
-        écrire_à_stdout(V_SERVEUR_NÉCESSAIRE.strip("^"))
-        return
-
+def lancer(port):
     async def main():
         écrire_à_stdout("Initialisation du serveur")
         port_ = port or 5000
