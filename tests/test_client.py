@@ -76,11 +76,11 @@ class TestClient(TestCase):
 
             résultat = {}
 
-            def f_suivre_données(éléments):
+            async def f_suivre_données(éléments):
                 if éléments:
                     résultat["élément"] = éléments
                     soimême.assertEqual(éléments[0]["données"][id_col], 123)
-                    oublier_données()
+                    await oublier_données()
 
             oublier_données = await client.tableaux.suivreDonnées(id_tableau=id_tableau, f=f_suivre_données)
             await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
