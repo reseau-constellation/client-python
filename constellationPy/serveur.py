@@ -44,7 +44,7 @@ def lancer_serveur(
         cmd += ["--doss-sfip", sfip]
 
     p = subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, bufsize=0, universal_newlines=True
+        cmd, stdout=subprocess.PIPE, bufsize=0, text=True
     )
     for ligne in iter(p.stdout.readline, b''):
         if not ligne:
