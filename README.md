@@ -156,6 +156,19 @@ with Serveur():
     données = client.obt_données_tableau(id_tableau=id_tableau)
 ```
 
+Vous pouvez également obtenir les données en format Pandas, y compris avec les colonnes identifiées selon
+le nom des variables correspondantes dans la langue de votre choix, si elle est disponible :
+
+```python
+from constellationPy import ClientSync, Serveur
+
+id_tableau = "/orbitdb/zdpu..."
+
+with Serveur():
+    client = ClientSync()
+    données = client.obt_données_tableau(id_tableau=id_tableau, langues=["fr", "es"], formatDonnées="pandas")
+```
+
 **Quelques points importants**
 
 * Les fonctions plus obscures qui prennent plus qu'une autre fonction comme argument (p.
