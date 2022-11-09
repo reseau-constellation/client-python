@@ -272,6 +272,7 @@ def assurer_npm_pnpm_installés():
         if résultat_pnpm.returncode != 0:
             raise ConnectionError(
                 f"Erreur d'installation de PNPM :\n\t{résultat_pnpm.stderr.decode()}"
+                f"\n\t{résultat_pnpm.stdout.decode()}"
             )
 
 
