@@ -25,8 +25,10 @@ jobs:
         with:
           node-version: 16
 
-      - name: Installer PNPM
-        run: curl -fsSL https://get.pnpm.io/install.sh | sh -
+      - name: Installer
+        uses: pnpm/action-setup@v2.2.4
+        with:
+          version: latest
 
       #----------------------------------------------
       #  -----  install & configure poetry  -----
