@@ -25,6 +25,9 @@ jobs:
         with:
           node-version: 16
 
+      - name: Installer PNPM
+        run: curl -fsSL https://get.pnpm.io/install.sh | sh -
+
       #----------------------------------------------
       #  -----  install & configure poetry  -----
       #----------------------------------------------

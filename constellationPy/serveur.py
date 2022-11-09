@@ -274,13 +274,6 @@ def assurer_npm_pnpm_installés():
                 f"Erreur d'installation de PNPM :\n\t{résultat_npm.stderr.decode()}"
                 f"\n\t{résultat_npm.stdout.decode()}"
             )
-        résultat_npm = subprocess.run(["pnpm", "setup"], capture_output=True)
-        if résultat_npm.returncode != 0:
-            raise ConnectionError(
-                f"Erreur d'installation de PNPM :\n\t{résultat_npm.stderr.decode()}"
-                f"\n\t{résultat_npm.stdout.decode()}"
-            )
-
 
 def _installer_nodejs():
     système_opératoire = platform.system()
