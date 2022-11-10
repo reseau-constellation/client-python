@@ -171,7 +171,34 @@ class TestClient(TestCase):
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     async def test_recherche(soimême):
-        raise NotImplementedError
+        résultat = {}
+
+        def fonction_suivi_recherche(x):
+            résultat["vars"] = x
+
+        async with ouvrir_client() as client:
+            id_var_tmaxi = await client.variables.créerVariable(catégorie="numérique")
+            await client.variables.ajouter_noms_variable(id=id_var_tmaxi, noms={"fr": "Température maximale"})
+
+            id_var_tmini = await client.variables.créerVariable(catégorie="numérique")
+            await client.variables.ajouter_noms_variable(id=id_var_tmini, noms={"fr": "Température minimale"})
+
+            fs = await client.recherche.rechercher_variable_selon_nom(
+                nom_variable="Température",
+                f=fonction_suivi_recherche,
+                nRésultatsDésirés=2
+            )
+            soimême.assertEqual(2, len(résultat["vars"]), "Taille initiale")
+
+            await fs["fChangerN"](1)
+            await trio.sleep(.1)
+            soimême.assertEqual(1, len(résultat["vars"]), "Diminuer taille")
+
+            await fs["fChangerN"](2)
+            await trio.sleep(.1)
+            soimême.assertEqual(2, len(résultat["vars"]), "Augmenter taille")
+
+            await fs["fOublier"]()
 
     async def test_canal_erreurs(soimême):
 
