@@ -1,4 +1,5 @@
 # ConstellationPy
+[![Paquet Python](https://github.com/reseau-constellation/client-python/actions/workflows/test.yaml/badge.svg)](https://github.com/reseau-constellation/client-python/actions/workflows/test.yaml)
 
 Cette librarie offre un client [Constellation](https://reseau-constellation.github.io/constellation)
 pour Python. Elle fonctionne en lançant
@@ -199,7 +200,7 @@ originale s'attendait à avoir la fonction de suivi. Par exemple, si l'on appell
 Constellation JavaScript,
 
 ```javascript
-const données = await client.tableaux.suivreDonnées({idTableau: id_tableau, f: fSuivi});
+const données = await client.tableaux.suivreDonnées({ idTableau: id_tableau, f: fSuivi });
 ```
 
 Ici, en Python, nous ferons ainsi :
