@@ -29,6 +29,9 @@ jobs:
         with:
           node-version: 16
 
+      - name: Vérifier installation Node.js
+        run: npm -v
+
       - name: Installer PNPM
         uses: pnpm/action-setup@v2.2.4
         with:
@@ -56,13 +59,13 @@ jobs:
       #----------------------------------------------
       # install dependencies if cache does not exist
       #----------------------------------------------
-      - name: Install dependencies
+      - name: Installer dépendances
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root
       #----------------------------------------------
       # install your root project, if required
       #----------------------------------------------
-      - name: Install library
+      - name: Installer la librairie
         run: poetry install --no-interaction
 
       #----------------------------------------------
