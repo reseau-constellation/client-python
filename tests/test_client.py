@@ -141,6 +141,7 @@ class TestClient(TestCase):
         réf = pd.DataFrame({id_col: [123], "id": données["id"]})
         pdt.assert_frame_equal(données, réf)
 
+    @unittest.skip("Doit être implémenté dans l'IPA de Constellation")
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     async def test_obt_données_réseau(soimême):
         # async with ouvrir_client() as client:

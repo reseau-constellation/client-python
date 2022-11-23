@@ -87,6 +87,7 @@ class TestSync(unittest.TestCase):
         réf = pd.DataFrame({id_col: [123], "id": données["id"]})
         pdt.assert_frame_equal(données, réf)
 
+    @unittest.skip("Doit être implémenté dans l'IPA de Constellation")
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur")
     def test_obt_données_réseau(soimême):
         # client = ClientSync()
