@@ -275,6 +275,7 @@ def assurer_npm_pnpm_installés():
                 f"\n\t{résultat_npm.stdout.decode()}"
             )
 
+
 def _installer_nodejs():
     système_opératoire = platform.system()
 
