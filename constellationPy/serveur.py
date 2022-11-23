@@ -39,9 +39,9 @@ def lancer_serveur(
     if port:
         cmd += ["-p", str(port)]
     if orbite:
-        cmd += ["--doss-orbite", orbite]
+        cmd += [f"--doss-orbite={orbite}"]
     if sfip:
-        cmd += ["--doss-sfip", sfip]
+        cmd += [f"--doss-sfip={sfip}"]
 
     p = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, bufsize=0, text=True

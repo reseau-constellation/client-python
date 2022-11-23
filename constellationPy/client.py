@@ -21,7 +21,6 @@ async def ouvrir_client(port: Optional[int] = None) -> Client:
         async with Client(pouponnière, port) as client:
             await client.connecter()
             yield client
-            print("On a terminé")
 
 
 ErreurClientNonInitialisé = trio.ClosedResourceError(
@@ -115,7 +114,6 @@ class Client(trio.abc.AsyncResource):
         soimême._context_annuler_écoute = await soimême.pouponnière.start(soimême._écouter)
 
     async def aclose(soimême):
-        print("On ferme tout")
         if soimême is not soimême._client_original:
             return
 
@@ -153,7 +151,6 @@ class Client(trio.abc.AsyncResource):
                         # On rapporte ici uniquement les erreurs génériques (non spécifiques à une requête)
                         if "id" in m_json and soimême.canal_erreurs:
                             m = {"erreur": m_json["erreur"]}
-                            print("erreure envoyée : ", m)
                             await soimême.canal_erreurs.send(json.dumps(m))
 
                         soimême._erreur(m_json["erreur"])
@@ -162,7 +159,6 @@ class Client(trio.abc.AsyncResource):
                         soimême._erreur(f"Type inconnu {type_} dans message {m_json}")
 
     def _erreur(soimême, e: str) -> None:
-        print("erreur reçue : ", e)
         soimême.erreurs.insert(0, e)
 
         # On envoie les erreurs au canal s'il existe. Sinon, on arrête l'exécution.
@@ -188,7 +184,6 @@ class Client(trio.abc.AsyncResource):
             "args": args,
         }
         await soimême._envoyer_message(message)
-        print("On attend le résultat de : ", message)
         val = await soimême._attendre_message(id_, soimême.canal_réception.clone())
 
         if val and val["type"] == "action":
@@ -230,18 +225,15 @@ class Client(trio.abc.AsyncResource):
         # https://stackoverflow.com/questions/60674136/python-how-to-cancel-a-specific-task-spawned-by-a-nursery-in-python-trio
         # https://trio.readthedocs.io/en/stable/reference-core.html#trio.CancelScope
         async def _suiveur(canal, task_status=trio.TASK_STATUS_IGNORED):
-            print("suiveur")
             with trio.CancelScope() as _context:
                 task_status.started(_context)
                 async with canal:
                     async for val in canal:
                         val = json.loads(val)
-                        print("suiveur a reçu val", val)
                         if "id" in val and val["id"] == id_:
                             if val["type"] == "suivrePrêt":
                                 prêt["statut"] = val
                             elif val["type"] == "suivre":
-                                print("message suivi reçu !", val["résultat"])
                                 if inspect.iscoroutinefunction(f):
                                     soimême.pouponnière.start_soon(f, val["résultat"])
                                 else:
@@ -264,11 +256,9 @@ class Client(trio.abc.AsyncResource):
             # await soimême._attendre_message(id_, soimême.canal_réception.clone(), "suivrePrêt")
 
         valeur_retour = prêt["statut"]
-        print("valeur_retour", valeur_retour)
 
         def générer_f_retour(nom: str):
             async def f_retour(*args_):
-                print("f_retour", nom, args_)
                 message_retour = {
                     "type": "retour",
                     "id": id_,
@@ -287,11 +277,9 @@ class Client(trio.abc.AsyncResource):
         return f_oublier
 
     async def _attendre_message(soimême, id_: str, canal_réception, type_: str = None):
-        print("On attend le message : ", id_)
         async with canal_réception:
             async for val in canal_réception:
                 message = json.loads(val)
-                print("On a reçu un message : ", message)
                 if "id" in message and message["id"] == id_:
                     if message["type"] == "erreur":
                         soimême._erreur(message["erreur"])
@@ -316,12 +304,14 @@ class Client(trio.abc.AsyncResource):
                 return await soimême.tableaux.suivreVariables(
                     idTableau=id_tableau, f=f
                 )
+
             variables = await une_fois(f_suivi_variables, soimême.pouponnière)
 
             async def f_suivi_colonnes(f):
                 return await soimême.tableaux.suivreColonnes(
                     idTableau=id_tableau, f=f
                 )
+
             colonnes = await une_fois(f_suivi_colonnes, soimême.pouponnière)
 
             for id_variable in variables:

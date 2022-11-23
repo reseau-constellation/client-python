@@ -18,8 +18,7 @@ class TestClient(TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.dossier = tempfile.TemporaryDirectory()
-        cls.serveur = Serveur(sfip=path.join(cls.dossier.name, "sfip"), orbite=path.join(cls.dossier.name, "orbite"))
+        cls.serveur = Serveur()
         cls.serveur.__enter__()
 
     async def test_action(soimême):
@@ -227,4 +226,3 @@ class TestClient(TestCase):
     @classmethod
     def tearDownClass(cls) -> None:
         cls.serveur.__exit__()
-        cls.dossier.cleanup()
