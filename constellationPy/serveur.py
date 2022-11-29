@@ -135,6 +135,7 @@ def _obt_version(commande: TypeExe, arg="-v") -> Optional[str]:
     try:
         résultat = subprocess.run([*commande, arg], capture_output=True)
     except FileNotFoundError:
+        print("FileNotFoundError", [*commande, arg])
         return
     print("résultat", résultat)
     print(résultat.returncode)
