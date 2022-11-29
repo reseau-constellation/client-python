@@ -232,9 +232,11 @@ def _vérifier_installation(exe_: Union[str, Tuple[str]]) -> True:
     ipa_installée = ipa_est_installée(exe_)
     if not ipa_installée:
         raise ErreurInstallationConstellation(message_erreur)
+    print("ipa_installée", ipa_installée)
 
     # Obtenir version serveur
     version_serveur = obt_version_serveur(exe_)
+    print("version_serveur", version_serveur)
 
     # Si serveur non installé, erreur
     if not version_serveur:
