@@ -136,7 +136,10 @@ def _obt_version(commande: TypeExe, arg="-v") -> Optional[str]:
         résultat = subprocess.run([*commande, arg], capture_output=True)
     except FileNotFoundError:
         return
-
+    print("résultat", résultat)
+    print(résultat.returncode)
+    print(résultat.stdout.decode())
+    print(résultat.stderr.decode())
     if résultat.returncode == 0:
         return résultat.stdout.decode().replace("\r", '').replace("\n", '')
 
@@ -168,8 +171,7 @@ def mettre_ipa_à_jour(exe: TypeExe = EXE_CONSTL):
 
 def ipa_est_installée(exe: TypeExe = EXE_CONSTL) -> bool:
     try:
-        version_ipa = _obt_version(exe, "version")
-        print("ici 0", version_ipa)
+        _obt_version(exe, "version")
         return True
     except ChildProcessError as é:
         if "ERR_MODULE_NOT_FOUND" in str(é) and PAQUET_IPA in str(é):
