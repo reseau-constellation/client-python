@@ -203,13 +203,19 @@ def lancer(port):
     async def main():
         écrire_à_stdout("Initialisation du serveur")
         port_ = port or 5000
+        écrire_à_stdout("port", port_)
 
         async with trio.open_nursery() as pouponnière:
             async def _lancer_port_ws(p):
                 await pouponnière.start(serve_websocket, serveur, 'localhost', int(p), None)
 
             if port:
-                await _lancer_port_ws(port_)
+                try:
+                    await _lancer_port_ws(port_)
+                except Exception as e:
+                    écrire_à_stdout(str(e))
+                    raise e
+
             else:
                 while True:
                     try:
@@ -220,6 +226,7 @@ def lancer(port):
                         if any(message in e.args[1] for message in messages_possibles):
                             port_ += 1
                         else:
+                            écrire_à_stdout(str(e))
                             raise e
             écrire_à_stdout(f"Serveur prêt sur port : {port_}")
 

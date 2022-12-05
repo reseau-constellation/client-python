@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.DEBUG)
 class TestServeur(TestCase):
 
     async def test_détecter_port(soimême):
-        port_serveur = 5005
+        port_serveur = 5006
         with Serveur(port_serveur):
             port_contexte = obtenir_contexte()
             soimême.assertEqual(port_contexte, port_serveur)
@@ -23,7 +23,7 @@ class TestServeur(TestCase):
                     pass
 
     async def test_avec_contexte(soimême):
-        port_serveur = 5005
+        port_serveur = 5007
         with Serveur(port_serveur):
             async with ouvrir_client() as client:
                 port_client = client.port

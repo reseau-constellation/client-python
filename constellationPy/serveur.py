@@ -1,6 +1,6 @@
+import datetime
 import json
 import logging
-import os
 import platform
 import subprocess
 from functools import lru_cache
@@ -46,19 +46,20 @@ def lancer_serveur(
         cmd += [f"--doss-sfip={sfip}"]
 
     p = subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0, text=True, encoding="utf-8",
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, bufsize=0,
+        text=True,
+        encoding="utf-8",
         shell=platform.system() == "Windows"
     )
+
     for ligne in iter(p.stdout.readline, ''):
-        if not ligne:
-            break
         logging.debug("Message du serveur : " + ligne)
-        logging.debug("Serveur prêt sur port :" + str(ligne.startswith("Serveur prêt sur port :")))
+
         if ligne.startswith("Serveur prêt sur port :"):
             port = int(ligne.split(":")[1])
-            break
-    logging.debug(f"Serveur prêt, {port}")
-    return p, port
+            return p, port
+
+    raise ConnectionError("Le serveur n'a pas répondu.")
 
 
 type_contexte = TypedDict("type_contexte", {"port_serveur": Optional[int]})
@@ -393,4 +394,5 @@ class Serveur(object):
 
     def __exit__(soimême, *args):
         effacer_contexte()
+        soimême.serveur.stdin.write("\n")
         soimême.serveur.terminate()
