@@ -77,4 +77,4 @@ jobs:
       - name: Tests complets
         env:
           VRAI_SERVEUR: 1
-        run: poetry run pytest
+        run: poetry run pytest -s
