@@ -1,8 +1,11 @@
+import logging
 from unittest import TestCase
 
 from constellationPy.client import ouvrir_client
 from constellationPy.serveur import obtenir_contexte, ErreurConnexionContexteExistant
 from tests.utils import Serveur
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class TestServeur(TestCase):

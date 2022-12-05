@@ -104,11 +104,11 @@ def mettre_serveur_à_jour(exe: TypeExe = EXE_CONSTL):
 def obt_version_serveur(exe: TypeExe = EXE_CONSTL) -> Optional[Version]:
     try:
         if v := _obt_version(exe, "version"):
-            print("ici 1", v)
+            logging.debug("ici 1" + v)
             return Version(v)
     except ChildProcessError as é:
         if f"Error: Cannot find module '{PAQUET_IPA}'" in str(é):
-            print("ici 2", str(é))
+            logging.debug("ici 2" + str(é))
             return
         else:
             raise é
@@ -141,13 +141,17 @@ def _obt_version(commande: TypeExe, arg="-v") -> Optional[str]:
     try:
         résultat = subprocess.run([*commande, arg], capture_output=True, shell=platform.system() == "Windows")
     except FileNotFoundError:
-        print("FileNotFoundError", [*commande, arg])
+        logging.debug("FileNotFoundError", [*commande, arg])
         return
-    print("PATH", os.getenv("PATH"))
-    print("résultat", résultat)
-    print("returncode", résultat.returncode)
-    print("stdout", résultat.stdout.decode())
-    print("stderr", résultat.stderr.decode())
+    LOGGER = logging.getLogger(__name__)
+
+    LOGGER.info("Logging")
+    print("logging")
+    LOGGER.critical("PATH" + os.getenv("PATH"))
+    LOGGER.warning(résultat)
+    LOGGER.debug(résultat.returncode)
+    LOGGER.warning("stdout" + résultat.stdout.decode())
+    LOGGER.warning("stderr" + résultat.stderr.decode())
     if résultat.returncode == 0:
         return résultat.stdout.decode().replace("\r", '').replace("\n", '')
     elif "is not recognized as an internal or external command" in résultat.stderr.decode():
@@ -246,11 +250,11 @@ def _vérifier_installation(exe_: Union[str, Tuple[str]]) -> True:
     ipa_installée = ipa_est_installée(exe_)
     if not ipa_installée:
         raise ErreurInstallationConstellation(message_erreur)
-    print("ipa_installée", ipa_installée)
+    logging.debug("ipa_installée" + str(ipa_installée))
 
     # Obtenir version serveur
     version_serveur = obt_version_serveur(exe_)
-    print("version_serveur", version_serveur)
+    logging.debug("version_serveur" + str(version_serveur))
 
     # Si serveur non installé, erreur
     if not version_serveur:
