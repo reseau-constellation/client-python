@@ -141,7 +141,7 @@ def _obt_version(commande: TypeExe, arg="-v") -> Optional[str]:
     try:
         résultat = subprocess.run([*commande, arg], capture_output=True, shell=platform.system() == "Windows")
     except FileNotFoundError:
-        logging.debug("FileNotFoundError", [*commande, arg])
+        logging.debug("FileNotFoundError " + str([*commande, arg]))
         return
 
     logging.debug(résultat.returncode)
@@ -167,6 +167,7 @@ def mettre_ipa_à_jour(exe: TypeExe = EXE_CONSTL):
     if not ipa_installée:
         logging.info("Installation de l'IPA de Constellation")
         installer_ipa()
+        logging.info("Constellation installée")
 
     # Obtenir versions ipa compatibles avec serveur
     version_ipa = obt_version_ipa(exe)
@@ -317,11 +318,16 @@ def _installer_nodejs():
 
 def installer_de_pnpm(paquet: str, version: Union[Version, SimpleSpec, str] = "latest"):
     assurer_npm_pnpm_installés()
+
+    logging.debug("On installe avec " + str(["pnpm", "add", "-g", paquet + "@" + str(version)]))
     résultat_pnpm = subprocess.run(
         ["pnpm", "add", "-g", paquet + "@" + str(version)],
         capture_output=True,
         shell=platform.system() == "Windows"
     )
+    logging.debug(résultat_pnpm.stdout.decode())
+    logging.debug(résultat_pnpm.stderr.decode())
+    logging.info(f"Paquet {paquet}, version {version} installé.")
 
     if résultat_pnpm.returncode != 0:
         raise ConnectionError(
