@@ -69,7 +69,7 @@ class TestSync(unittest.TestCase):
         soimême.client.variables.ajouter_noms_variable(id=id_var, noms={"fr": "Précipitation"})
 
         données = soimême.client.obt_données_tableau(id_tableau=id_tableau, langues=["த", "fr"], formatDonnées="pandas")
-        print(données)
+
         réf = pd.DataFrame({"Précipitation": [123], "id": données["id"]})
         pdt.assert_frame_equal(données.sort_index(axis=1), réf.sort_index(axis=1))
 

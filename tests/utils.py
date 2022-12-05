@@ -24,7 +24,11 @@ if VRAI_SERVEUR:
 
         def __exit__(soimême, *args):
             super().__exit__(*args)
-            soimême.dossier.cleanup()
+            try:
+                soimême.dossier.cleanup()
+            except NotADirectoryError:
+                # Drôle d'erreur sur Windows
+                pass
 
 else:
     from .ressources.faux_serveur import Serveur
