@@ -107,10 +107,8 @@ class Client(trio.abc.AsyncResource):
         soimême._canal_erreurs = canal_erreurs
 
         # établir la connexion
-        logging.debug(f"Le client se connecte au port {soimême.port}")
         url = f"ws://localhost:{soimême.port}"
         soimême.connexion = await tw.connect_websocket_url(soimême.pouponnière, url)
-        logging.debug(f"Le client est connecté au port {soimême.port}")
 
         # démarrer l'écoute
         soimême.canaux = trio.open_memory_channel(0)

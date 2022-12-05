@@ -138,8 +138,6 @@ def _obt_version(commande: TypeExe, arg="-v") -> Optional[str]:
     if isinstance(commande, str):
         commande = [commande]
 
-    logging.debug("commande " + str([*commande, arg]))
-
     try:
         résultat = subprocess.run([*commande, arg], capture_output=True, shell=platform.system() == "Windows")
     except FileNotFoundError:
@@ -248,7 +246,6 @@ def _vérifier_installation(exe_: Union[str, Tuple[str]]) -> True:
     ipa_installée = ipa_est_installée(exe_)
     if not ipa_installée:
         raise ErreurInstallationConstellation(message_erreur)
-    logging.debug("ipa_installée" + str(ipa_installée))
 
     # Obtenir version serveur
     version_serveur = obt_version_serveur(exe_)
@@ -321,14 +318,12 @@ def _installer_nodejs():
 def installer_de_pnpm(paquet: str, version: Union[Version, SimpleSpec, str] = "latest"):
     assurer_npm_pnpm_installés()
 
-    logging.debug("On installe avec " + str(["pnpm", "add", "-g", paquet + "@" + str(version)]))
     résultat_pnpm = subprocess.run(
         ["pnpm", "add", "-g", paquet + "@" + str(version)],
         capture_output=True,
         shell=platform.system() == "Windows"
     )
-    logging.debug(résultat_pnpm.stdout.decode())
-    logging.debug(résultat_pnpm.stderr.decode())
+
     logging.info(f"Paquet {paquet}, version {version} installé.")
 
     if résultat_pnpm.returncode != 0:
