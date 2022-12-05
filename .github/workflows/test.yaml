@@ -72,7 +72,7 @@ jobs:
       #              run test suite
       #----------------------------------------------
       - name: Tests simples
-        run: poetry run pytest
+        run: poetry run pytest -s
 
       - name: Tests complets
         env:
