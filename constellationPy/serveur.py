@@ -1,4 +1,3 @@
-import datetime
 import json
 import logging
 import platform
@@ -396,3 +395,4 @@ class Serveur(object):
         effacer_contexte()
         soimême.serveur.stdin.write("\n")
         soimême.serveur.terminate()
+        soimême.serveur.wait(2)
