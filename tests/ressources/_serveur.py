@@ -215,8 +215,8 @@ def lancer(port):
                         await _lancer_port_ws(port_)
                         break
                     except OSError as e:
-                        message = "Only one usage" if platform.system() == "Windows" else "Address already in use"
-                        if message in e.args[1]:
+                        messages_possibles = ["Only one usage", "Address already in use"]
+                        if any(message in e.args[1] for message in messages_possibles):
                             port_ += 1
                         else:
                             raise e
