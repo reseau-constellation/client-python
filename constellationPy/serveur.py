@@ -56,7 +56,7 @@ def lancer_serveur(
         if ligne.startswith("Serveur prêt sur port :"):
             port = int(ligne.split(":")[1])
             break
-
+    logging.debug(f"Serveur prêt, {port}")
     return p, port
 
 
