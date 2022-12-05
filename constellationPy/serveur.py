@@ -140,7 +140,7 @@ def _obt_version(commande: TypeExe, arg="-v") -> Optional[str]:
 
     try:
         résultat = subprocess.run([*commande, arg], capture_output=True, shell=platform.system() == "Windows")
-    except (FileNotFoundError, ChildProcessError):
+    except FileNotFoundError:
         print("FileNotFoundError", [*commande, arg])
         return
     print("PATH", os.getenv("PATH"))
@@ -150,6 +150,8 @@ def _obt_version(commande: TypeExe, arg="-v") -> Optional[str]:
     print("stderr", résultat.stderr.decode())
     if résultat.returncode == 0:
         return résultat.stdout.decode().replace("\r", '').replace("\n", '')
+    elif "is not recognized as an internal or external command" in résultat.stderr.decode():
+        return
 
     raise ChildProcessError(
         f"Erreur obtention de version pour {commande}: {résultat.stdout.decode()} {résultat.stderr.decode()}"
