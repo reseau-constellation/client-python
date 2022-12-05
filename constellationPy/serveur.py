@@ -136,7 +136,7 @@ def _obt_version(commande: TypeExe, arg="-v") -> Optional[str]:
     if isinstance(commande, str):
         commande = [commande]
 
-    logging.debug("commande " + str(commande))
+    logging.debug("commande " + str([*commande, arg]))
 
     try:
         résultat = subprocess.run([*commande, arg], capture_output=True, shell=platform.system() == "Windows")
@@ -144,7 +144,6 @@ def _obt_version(commande: TypeExe, arg="-v") -> Optional[str]:
         logging.debug("FileNotFoundError", [*commande, arg])
         return
 
-    logging.debug(résultat)
     logging.debug(résultat.returncode)
     logging.debug("stdout" + résultat.stdout.decode())
     logging.debug("stderr" + résultat.stderr.decode())
