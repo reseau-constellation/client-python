@@ -140,7 +140,7 @@ def _obt_version(commande: TypeExe, arg="-v") -> Optional[str]:
 
     try:
         résultat = subprocess.run([*commande, arg], capture_output=True, shell=platform.system() == "Windows")
-    except FileNotFoundError:
+    except (FileNotFoundError, ChildProcessError):
         print("FileNotFoundError", [*commande, arg])
         return
     print("PATH", os.getenv("PATH"))
