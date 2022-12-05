@@ -10,7 +10,7 @@ try:
     from constellationPy.const import V_SERVEUR_NÉCESSAIRE
 except ModuleNotFoundError:
     # Pour tests sur Ubuntu... pas sûr pourquoi ça ne fonctionne pas...
-    V_SERVEUR_NÉCESSAIRE = "^0.1.0"
+    V_SERVEUR_NÉCESSAIRE = "^0.1.9"
 
 _données = {}
 
