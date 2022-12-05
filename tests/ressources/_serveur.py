@@ -1,5 +1,4 @@
 import json
-import platform
 import sys
 
 import click
@@ -15,6 +14,8 @@ except ModuleNotFoundError:
 
 _données = {}
 
+# Nécessaire pour Windows
+sys.stdout.reconfigure(encoding='utf-8')
 
 def erreur_fonction_non_définie(message):
     return {
@@ -221,7 +222,6 @@ def lancer(port):
                         else:
                             raise e
             écrire_à_stdout(f"Serveur prêt sur port : {port_}")
-            sys.stdout.flush()
 
     trio.run(main)
 
