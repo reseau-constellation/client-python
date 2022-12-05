@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import platform
 import subprocess
 from functools import lru_cache
@@ -142,6 +143,7 @@ def _obt_version(commande: TypeExe, arg="-v") -> Optional[str]:
     except FileNotFoundError:
         print("FileNotFoundError", [*commande, arg])
         return
+    print("PATH", os.getenv("PATH"))
     print("résultat", résultat)
     print("returncode", résultat.returncode)
     print("stdout", résultat.stdout.decode())
