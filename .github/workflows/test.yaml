@@ -1,4 +1,4 @@
-name: Paquet Python
+name: Client Python
 
 on: [push]
 
