@@ -136,7 +136,7 @@ def _obt_version(commande: TypeExe, arg="-v") -> Optional[str]:
     if isinstance(commande, str):
         commande = [commande]
 
-    logging.debug("commande", commande)
+    logging.debug("commande " + str(commande))
 
     try:
         résultat = subprocess.run([*commande, arg], capture_output=True, shell=platform.system() == "Windows")
