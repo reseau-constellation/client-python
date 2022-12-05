@@ -61,12 +61,15 @@ def lancer_serveur(
 type_contexte = TypedDict("type_contexte", {"port_serveur": Optional[int]})
 context: type_contexte = {"port_serveur": None}
 
-ErreurConnexionContexteExistant = ConnectionError("On ne peut avoir qu'un seule serveur en contexte à la fois.")
+
+class ErreurConnexionContexteExistant(ConnectionError):
+    def __init__(soimême):
+        super().__init__("On ne peut avoir qu'un seule serveur en contexte à la fois.")
 
 
 def changer_contexte(port: int):
     if context["port_serveur"] is not None:
-        raise ErreurConnexionContexteExistant
+        raise ErreurConnexionContexteExistant()
 
     context["port_serveur"] = port
 
@@ -366,7 +369,7 @@ class Serveur(object):
 
     def __enter__(soimême):
         if obtenir_contexte():
-            raise ErreurConnexionContexteExistant
+            raise ErreurConnexionContexteExistant()
         soimême.serveur, soimême.port = lancer_serveur(
             port=soimême.port,
             autoinstaller=soimême.autoinstaller,

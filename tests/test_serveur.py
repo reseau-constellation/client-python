@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from constellationPy.client import ouvrir_client
-from constellationPy.serveur import obtenir_contexte
+from constellationPy.serveur import obtenir_contexte, ErreurConnexionContexteExistant
 from tests.utils import Serveur
 
 
@@ -14,7 +14,7 @@ class TestServeur(TestCase):
             soimême.assertEqual(port_contexte, port_serveur)
 
     async def test_erreur_deux_serveurs(soimême):
-        with soimême.assertRaises(ConnectionError):
+        with soimême.assertRaises(ErreurConnexionContexteExistant):
             with Serveur():
                 with Serveur():
                     pass
