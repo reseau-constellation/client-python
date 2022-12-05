@@ -379,5 +379,4 @@ class Serveur(object):
 
     def __exit__(soimême, *args):
         effacer_contexte()
-        soimême.serveur.stdin.writelines(["\n"])
         soimême.serveur.terminate()
