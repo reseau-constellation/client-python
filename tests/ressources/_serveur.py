@@ -1,4 +1,5 @@
 import json
+import platform
 import sys
 
 import click
@@ -214,7 +215,8 @@ def lancer(port):
                         await _lancer_port_ws(port_)
                         break
                     except OSError as e:
-                        if e.args[1] == "Address already in use":
+                        message = "Only one usage" if platform.system() == "Windows" else "Address already in use"
+                        if message in e.args[1]:
                             port_ += 1
                         else:
                             raise e
