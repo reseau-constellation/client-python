@@ -9,7 +9,7 @@ from uuid import uuid4
 import trio
 import trio_websocket as tw
 
-from .const import LIEN_RAPPORTAGE_ERREURS
+from .const import LIEN_SIGNALEMENT_ERREURS
 from .serveur import obtenir_contexte
 from .utils import à_chameau, à_kebab, fais_rien_asynchrone, une_fois, tableau_à_pandas
 
@@ -191,11 +191,11 @@ class Client(trio.abc.AsyncResource):
         else:
             soimême._erreur(
                 json.dumps(val, ensure_ascii=False, indent=2) +
-                "Avez-vous utilisés les bons arguments pour la fonction que vous venez d'appeler ?. \n"
+                "Avez-vous utilisé les bons arguments pour la fonction que vous venez d'appeler ?. \n"
                 "Le serveur local Constellation semble être en grève. \n"
                 "Si les négotiations n'aboutissent pas, n'hésitez pas à "
                 "nous demander de l'aide :\n"
-                f"\t{LIEN_RAPPORTAGE_ERREURS}"
+                f"\t{LIEN_SIGNALEMENT_ERREURS}"
             )
 
     async def _appeler_fonction_suivre(

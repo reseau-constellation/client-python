@@ -1,4 +1,5 @@
 import json
+import logging
 import platform
 import subprocess
 from functools import lru_cache
@@ -44,7 +45,8 @@ def lancer_serveur(
         cmd += [f"--doss-sfip={sfip}"]
 
     p = subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, bufsize=0, text=True
+        cmd, stdout=subprocess.PIPE, bufsize=0, text=True,
+        shell=platform.system() == "Windows"
     )
     for ligne in iter(p.stdout.readline, b''):
         if not ligne:
@@ -78,7 +80,7 @@ def obtenir_contexte() -> Optional[int]:
 
 
 def mettre_constellation_à_jour(exe: TypeExe = EXE_CONSTL):
-    print("Mise à jour de Constellation")
+    logging.info("Mise à jour de Constellation")
     assurer_npm_pnpm_installés()
 
     mettre_serveur_à_jour(exe)
@@ -89,7 +91,7 @@ def mettre_serveur_à_jour(exe: TypeExe = EXE_CONSTL):
     version_serveur = obt_version_serveur(exe)
     if not serveur_compatible(version_serveur):
         version_serveur_désirée = obt_version_serveur_plus_récente_compatible()
-        print(
+        logging.info(
             f"Mise à jour du serveur Constellation (version présente : {version_serveur}; "
             f"version désirée : {version_serveur_désirée})")
         installer_serveur(version_serveur_désirée)
@@ -133,14 +135,14 @@ def _obt_version(commande: TypeExe, arg="-v") -> Optional[str]:
         commande = [commande]
 
     try:
-        résultat = subprocess.run([*commande, arg], capture_output=True)
+        résultat = subprocess.run([*commande, arg], capture_output=True, shell=platform.system() == "Windows")
     except FileNotFoundError:
         print("FileNotFoundError", [*commande, arg])
         return
     print("résultat", résultat)
-    print(résultat.returncode)
-    print(résultat.stdout.decode())
-    print(résultat.stderr.decode())
+    print("returncode", résultat.returncode)
+    print("stdout", résultat.stdout.decode())
+    print("stderr", résultat.stderr.decode())
     if résultat.returncode == 0:
         return résultat.stdout.decode().replace("\r", '').replace("\n", '')
 
@@ -157,7 +159,7 @@ def mettre_ipa_à_jour(exe: TypeExe = EXE_CONSTL):
     # Si @constl/ipa n'est pas installée @constl/ipa et obtenir versions compatibles avec serveur
     ipa_installée = ipa_est_installée(exe)
     if not ipa_installée:
-        print("Installation de l'IPA de Constellation")
+        logging.info("Installation de l'IPA de Constellation")
         installer_ipa()
 
     # Obtenir versions ipa compatibles avec serveur
@@ -166,14 +168,13 @@ def mettre_ipa_à_jour(exe: TypeExe = EXE_CONSTL):
 
     # Installer @constl/ipa à la version la plus récente compatible avec le serveur
     if version_ipa != version_ipa_désirée:
-        print(f"Mise à jour de l'IPA de Constellation (courante: {version_ipa}, désirée: {version_ipa_désirée})")
+        logging.info(f"Mise à jour de l'IPA de Constellation (courante: {version_ipa}, désirée: {version_ipa_désirée})")
         installer_ipa(version_ipa_désirée)
 
 
 def ipa_est_installée(exe: TypeExe = EXE_CONSTL) -> bool:
     try:
-        _obt_version(exe, "version")
-        return True
+        return _obt_version(exe, "version") is not None
     except ChildProcessError as é:
         if "ERR_MODULE_NOT_FOUND" in str(é) and PAQUET_IPA in str(é):
             return False
@@ -266,7 +267,7 @@ def vérifier_installation_constellation(exe: TypeExe = EXE_CONSTL):
 def assurer_npm_pnpm_installés():
     version_npm = obt_version_npm()
     if not version_npm:
-        print("Installation de NPM")
+        logging.info("Installation de NPM")
         try:
             _installer_nodejs()
         except Exception:
@@ -275,8 +276,10 @@ def assurer_npm_pnpm_installés():
 
     version_pnpm = obt_version_pnpm()
     if not version_pnpm:
-        print("Installation de PNPM")
-        résultat_npm = subprocess.run(["npm", "install", "-g", "pnpm"], capture_output=True)
+        logging.info("Installation de PNPM")
+        résultat_npm = subprocess.run(
+            ["npm", "install", "-g", "pnpm"], capture_output=True, shell=platform.system() == "Windows"
+        )
         if résultat_npm.returncode != 0:
             raise ConnectionError(
                 f"Erreur d'installation de PNPM :\n\t{résultat_npm.stderr.decode()}"
@@ -296,7 +299,7 @@ def _installer_nodejs():
     for option in options_installation[système_opératoire]:
         try:
             for cmd in option:
-                subprocess.run(cmd.split())
+                subprocess.run(cmd.split(), shell=platform.system() == "Windows")
             if obt_version_npm():
                 return
         except FileNotFoundError:
@@ -310,7 +313,8 @@ def installer_de_pnpm(paquet: str, version: Union[Version, SimpleSpec, str] = "l
     assurer_npm_pnpm_installés()
     résultat_pnpm = subprocess.run(
         ["pnpm", "add", "-g", paquet + "@" + str(version)],
-        capture_output=True
+        capture_output=True,
+        shell=platform.system() == "Windows"
     )
 
     if résultat_pnpm.returncode != 0:
@@ -324,7 +328,8 @@ def désinstaller_de_pnpm(paquet):
     assurer_npm_pnpm_installés()
     résultat_pnpm = subprocess.run(
         ["pnpm", "remove", "-g", paquet],
-        capture_output=True
+        capture_output=True,
+        shell=platform.system() == "Windows"
     )
 
     if résultat_pnpm.returncode != 0:
@@ -338,7 +343,7 @@ def obt_version_pnpm() -> Optional[str]:
 
 
 def obt_version_npm() -> Optional[str]:
-    return _obt_version("npm", "version")
+    return _obt_version("npm", "-v")
 
 
 class Serveur(object):
@@ -374,4 +379,5 @@ class Serveur(object):
 
     def __exit__(soimême, *args):
         effacer_contexte()
+        soimême.serveur.stdin.writelines(["\n"])
         soimême.serveur.terminate()
