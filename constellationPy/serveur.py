@@ -104,11 +104,9 @@ def mettre_serveur_à_jour(exe: TypeExe = EXE_CONSTL):
 def obt_version_serveur(exe: TypeExe = EXE_CONSTL) -> Optional[Version]:
     try:
         if v := _obt_version(exe, "version"):
-            logging.debug("ici 1" + v)
             return Version(v)
     except ChildProcessError as é:
         if f"Error: Cannot find module '{PAQUET_IPA}'" in str(é):
-            logging.debug("ici 2" + str(é))
             return
         else:
             raise é
@@ -138,20 +136,18 @@ def _obt_version(commande: TypeExe, arg="-v") -> Optional[str]:
     if isinstance(commande, str):
         commande = [commande]
 
+    logging.debug("commande", commande)
+
     try:
         résultat = subprocess.run([*commande, arg], capture_output=True, shell=platform.system() == "Windows")
     except FileNotFoundError:
         logging.debug("FileNotFoundError", [*commande, arg])
         return
-    LOGGER = logging.getLogger(__name__)
 
-    LOGGER.info("Logging")
-    print("logging")
-    LOGGER.critical("PATH" + os.getenv("PATH"))
-    LOGGER.warning(résultat)
-    LOGGER.debug(résultat.returncode)
-    LOGGER.warning("stdout" + résultat.stdout.decode())
-    LOGGER.warning("stderr" + résultat.stderr.decode())
+    logging.debug(résultat)
+    logging.debug(résultat.returncode)
+    logging.debug("stdout" + résultat.stdout.decode())
+    logging.debug("stderr" + résultat.stderr.decode())
     if résultat.returncode == 0:
         return résultat.stdout.decode().replace("\r", '').replace("\n", '')
     elif "is not recognized as an internal or external command" in résultat.stderr.decode():
