@@ -46,12 +46,13 @@ def lancer_serveur(
         cmd += [f"--doss-sfip={sfip}"]
 
     p = subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, bufsize=0, text=True,
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0, text=True,
         shell=platform.system() == "Windows"
     )
     for ligne in iter(p.stdout.readline, b''):
         if not ligne:
             break
+        logging.info("Message du serveur : " + ligne)
         if ligne.startswith("Serveur prêt sur port :"):
             port = int(ligne.split(":")[1])
             break
