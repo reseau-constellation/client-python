@@ -54,7 +54,7 @@ def lancer_serveur(
     for ligne in iter(p.stdout.readline, ''):
         logging.debug("Message du serveur : " + ligne)
 
-        if ligne.startswith("Serveur prêt sur port :"):
+        if ":" in ligne:
             port = int(ligne.split(":")[1])
             return p, port
 
@@ -162,7 +162,7 @@ def installer_serveur(version: Version):
 
 
 def mettre_ipa_à_jour(exe: TypeExe = EXE_CONSTL):
-    # Si @constl/ipa n'est pas installée @constl/ipa et obtenir versions compatibles avec serveur
+    # Si @constl/ipa n'est pas installée, installer @constl/ipa et obtenir versions compatibles avec serveur
     ipa_installée = ipa_est_installée(exe)
     if not ipa_installée:
         logging.info("Installation de l'IPA de Constellation")
