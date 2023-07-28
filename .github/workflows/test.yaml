@@ -72,9 +72,15 @@ jobs:
       #              run test suite
       #----------------------------------------------
       - name: Tests simples
-        run: poetry run pytest
+        run: poetry run pytest --cov
 
       - name: Tests complets
         env:
           VRAI_SERVEUR: 1
-        run: poetry run pytest
+        run: poetry run pytest --cov
+        
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
