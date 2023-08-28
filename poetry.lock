@@ -555,17 +555,17 @@ sortedcontainers = "*"
 
 [[package]]
 name = "trio-websocket"
-version = "0.9.2"
+version = "0.10.3"
 description = "WebSocket library for Trio"
 optional = false
-python-versions = ">=3.5"
+python-versions = ">=3.7"
 files = [
-    {file = "trio-websocket-0.9.2.tar.gz", hash = "sha256:a3d34de8fac26023eee701ed1e7bf4da9a8326b61a62934ec9e53b64970fd8fe"},
-    {file = "trio_websocket-0.9.2-py3-none-any.whl", hash = "sha256:5b558f6e83cc20a37c3b61202476c5295d1addf57bd65543364e0337e37ed2bc"},
+    {file = "trio-websocket-0.10.3.tar.gz", hash = "sha256:1a748604ad906a7dcab9a43c6eb5681e37de4793ba0847ef0bc9486933ed027b"},
+    {file = "trio_websocket-0.10.3-py3-none-any.whl", hash = "sha256:a9937d48e8132ebf833019efde2a52ca82d223a30a7ea3e8d60a7d28f75a4e3a"},
 ]
 
 [package.dependencies]
-async-generator = ">=1.10"
+exceptiongroup = "*"
 trio = ">=0.11"
 wsproto = ">=0.14"
 
@@ -602,4 +602,4 @@ h11 = ">=0.9.0,<1"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "678d2240a5b3d07f16875a77471c1f85e62c6c4e912d9cd15aa46e35cf89042e"
+content-hash = "d988629120e01f73a720749326b5a846c0c25452d9237fca938ce291ab9c3d49"
