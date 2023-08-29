@@ -106,7 +106,7 @@ class Client(trio.abc.AsyncResource):
         soimême._canal_erreurs = canal_erreurs
 
         # établir la connexion
-        url = f"ws://localhost:{soimême.port}"
+        url = f"ws://127.0.0.1:{soimême.port}"
         soimême.connexion = await tw.connect_websocket_url(soimême.pouponnière, url)
 
         # démarrer l'écoute
