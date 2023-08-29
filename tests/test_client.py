@@ -18,7 +18,7 @@ class TestClient(TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.serveur = Serveur()
+        cls.serveur = Serveur(5124)
         cls.serveur.__enter__()
 
     async def test_action(soimême):

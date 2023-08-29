@@ -106,7 +106,7 @@ class Client(trio.abc.AsyncResource):
         soimême._canal_erreurs = canal_erreurs
 
         # établir la connexion
-        url = f"ws://127.0.0.1:{soimême.port}"
+        url = f"ws://localhost:{soimême.port}"
         soimême.connexion = await tw.connect_websocket_url(soimême.pouponnière, url)
 
         # démarrer l'écoute
@@ -190,11 +190,11 @@ class Client(trio.abc.AsyncResource):
             return val["résultat"] if "résultat" in val else None
         else:
             soimême._erreur(
-                json.dumps(val, ensure_ascii=False, indent=2) +
-                "Avez-vous utilisé les bons arguments pour la fonction que vous venez d'appeler ?. \n"
+                "Valeur reçue : " + json.dumps(val, ensure_ascii=False, indent=2) +
+                ". Avez-vous utilisé les bons arguments pour la fonction que vous venez d'appeler ?. \n"
                 "Le serveur local Constellation semble être en grève. \n"
                 "Si les négotiations n'aboutissent pas, n'hésitez pas à "
-                "nous demander de l'aide :\n"
+                "nous demander de l'aide :\n"
                 f"\t{LIEN_SIGNALEMENT_ERREURS}"
             )
 
