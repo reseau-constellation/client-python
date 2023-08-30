@@ -1,5 +1,7 @@
+import io
 import json
 import sys
+from random import random
 
 import click
 import trio
@@ -9,13 +11,15 @@ from trio_websocket import serve_websocket, ConnectionClosed, WebSocketConnectio
 try:
     from constellationPy.const import V_SERVEUR_NÉCESSAIRE
 except ModuleNotFoundError:
-    # Pour tests sur Ubuntu... pas sûr pourquoi ça ne fonctionne pas...
+    # Pour tests sur Ubuntu... je ne suis pas sûr pourquoi ça ne fonctionne pas...
     V_SERVEUR_NÉCESSAIRE = "^0.3.2"
 
 _données = {}
 
 # Nécessaire pour Windows
-sys.stdout.reconfigure(encoding='utf-8')
+if isinstance(sys.stdout, io.TextIOWrapper):
+    sys.stdout.reconfigure(encoding='utf-8')
+
 
 def erreur_fonction_non_définie(message):
     return {
@@ -42,8 +46,8 @@ class Suiveur(object):
             "données": soimême.valeur
         }, ws)
 
-    def oublier(soimême, id):
-        soimême.connexions.pop(id)
+    def oublier(soimême, id_):
+        soimême.connexions.pop(id_)
 
     async def changerValeur(soimême, val):
         soimême.valeur = val
@@ -70,8 +74,8 @@ class Chercheur(object):
             "données": list(range(taille))
         }, ws)
 
-    def oublier(soimême, id):
-        soimême.connexions.pop(id)
+    def oublier(soimême, id_):
+        soimême.connexions.pop(id_)
 
     async def changerTaille(soimême, id_: str, taille: int):
         if id_ not in soimême.connexions:
@@ -185,6 +189,7 @@ def cli():
 def v_constl():
     écrire_à_stdout("1.0.1")
 
+
 @click.command()
 def v_constl_obli():
     écrire_à_stdout("^1.0.0")
@@ -231,6 +236,7 @@ def lancer(port, m):
             écrire_à_stdout(f"Serveur prêt sur port : {port_}")
 
     trio.run(main)
+
 
 cli.add_command(v_constl)
 cli.add_command(v_constl_obli)

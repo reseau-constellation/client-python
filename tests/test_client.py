@@ -1,7 +1,6 @@
 import json
 import tempfile
 import unittest
-from os import path
 from unittest import TestCase
 
 import pandas as pd
@@ -178,10 +177,16 @@ class TestClient(TestCase):
 
         async with ouvrir_client() as client:
             id_var_tmaxi = await client.variables.créerVariable(catégorie="numérique")
-            await client.variables.sauvegarder_noms_variable(idVariable=id_var_tmaxi, noms={"fr": "Température maximale"})
+            await client.variables.sauvegarder_noms_variable(
+                idVariable=id_var_tmaxi,
+                noms={"fr": "Température maximale"}
+            )
 
             id_var_tmini = await client.variables.créerVariable(catégorie="numérique")
-            await client.variables.sauvegarder_noms_variable(idVariable=id_var_tmini, noms={"fr": "Température minimale"})
+            await client.variables.sauvegarder_noms_variable(
+                idVariable=id_var_tmini,
+                noms={"fr": "Température minimale"}
+            )
 
             fs = await client.recherche.rechercher_variables_selon_nom(
                 nom_variable="Température",
