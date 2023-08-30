@@ -134,7 +134,7 @@ class Client(trio.abc.AsyncResource):
                         message = await soimême.connexion.get_message()
                     except tw.ConnectionClosed:
                         break
-                    logging.debug("Message ws reçu : " + message)
+                    logging.debug("Message ws reçu : " + json.dumps(json.loads(message), ensure_ascii=False))
                     m_json = json.loads(message)
                     type_ = m_json["type"]
 
@@ -231,7 +231,7 @@ class Client(trio.abc.AsyncResource):
                 task_status.started(_context)
                 async with canal:
                     async for val in canal:
-                        logging.debug("message reçu : " + val)
+                        logging.debug("message reçu : " + json.dumps(json.loads(val), ensure_ascii=False))
                         val = json.loads(val)
                         if "id" in val and val["id"] == id_:
                             if val["type"] == "suivrePrêt":
