@@ -82,7 +82,7 @@ jobs:
       #              run test suite
       #----------------------------------------------
       - name: Tests simples
-        run: poetry run coverage xml run -m pytest --log-cli-level=DEBUG
+        run: poetry run coverage run -m pytest --log-cli-level=DEBUG && poetry run coverage xml
 
       - name: Tests complets
         env:
