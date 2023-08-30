@@ -1,5 +1,6 @@
 # ConstellationPy
 [![Paquet Python](https://github.com/reseau-constellation/client-python/actions/workflows/test.yaml/badge.svg)](https://github.com/reseau-constellation/client-python/actions/workflows/test.yaml)
+[![codecov](https://codecov.io/github/reseau-constellation/client-python/graph/badge.svg?token=F5dfS5Epsg)](https://codecov.io/github/reseau-constellation/client-python)
 
 Cette librarie offre un client [Constellation](https://reseau-constellation.github.io/constellation)
 pour Python. Elle fonctionne en lançant
