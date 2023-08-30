@@ -207,8 +207,6 @@ def version():
 def lancer(port, m):
     async def main():
         port_ = port or 5000
-        if m:
-            écrire_à_stdout("MESSAGE MACHINE : {\"type\": \"NŒUD PRÊT\", \"port\": " + str(port_) + "}")
 
         async with trio.open_nursery() as pouponnière:
             async def _lancer_port_ws(p):
@@ -233,7 +231,11 @@ def lancer(port, m):
                         else:
                             écrire_à_stdout(str(e))
                             raise e
-            écrire_à_stdout(f"Serveur prêt sur port : {port_}")
+
+            if m:
+                écrire_à_stdout("MESSAGE MACHINE : {\"type\": \"NŒUD PRÊT\", \"port\": " + str(port_) + "}")
+            else:
+                écrire_à_stdout(f"Serveur prêt sur port : {port_}")
 
     trio.run(main)
 
