@@ -82,12 +82,12 @@ jobs:
       #              run test suite
       #----------------------------------------------
       - name: Tests simples
-        run: poetry run coverage run -m pytest --log-cli-level=DEBUG
+        run: poetry run coverage xml run -m pytest --log-cli-level=DEBUG
 
       - name: Tests complets
         env:
           VRAI_SERVEUR: 1
-        run: poetry run coverage run -m pytest --log-cli-level=DEBUG
+        run: poetry run coverage run -m pytest --log-cli-level=DEBUG && poetry run coverage xml
         
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
