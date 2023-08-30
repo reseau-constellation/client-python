@@ -130,7 +130,7 @@ async def traiter_message(message, ws: WebSocketConnection):
 
     elif type_ == "action":
         fonction = tuple(message["fonction"])
-        if fonction == ("obtIdOrbite",):
+        if fonction == ("obtIdDispositif",):
             résultat = "1234567890"
             await envoyer_message_à_ws({
                 "type": "action",

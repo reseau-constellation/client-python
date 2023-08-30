@@ -18,18 +18,18 @@ class TestClient(TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls.serveur = Serveur(5124)
+        cls.serveur = Serveur()
         cls.serveur.__enter__()
 
     async def test_action(soimême):
         async with ouvrir_client() as client:
-            id_orbite = await client.obtIdOrbite()
+            id_orbite = await client.obtIdDispositif()
         soimême.assertIsInstance(id_orbite, str)
 
     async def test_kebab_et_chameau(soimême):
         async with ouvrir_client() as client:
-            id_kebab = await client.obt_id_orbite()
-            id_chameau = await client.obtIdOrbite()
+            id_kebab = await client.obt_id_dispositif()
+            id_chameau = await client.obtIdDispositif()
             soimême.assertEqual(id_kebab, id_chameau)
 
     @unittest.skipIf(VRAI_SERVEUR, "Test uniquement pour le faux serveur.")
@@ -109,13 +109,13 @@ class TestClient(TestCase):
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     async def test_obt_données_tableau_noms_variables(soimême):
         async with ouvrir_client() as client:
-            id_bd = await client.bds.créerBd(licence="ODBl-1.0")
+            id_bd = await client.bds.créerBd(licence="ODbl-1.0")
             id_tableau = await client.bds.ajouterTableauBd(id_bd=id_bd)
 
             id_var = await client.variables.créerVariable(catégorie="numérique")
             id_col = await client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_variable=id_var)
             await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
-            await client.variables.ajouter_noms_variable(id=id_var, noms={"fr": "Précipitation"})
+            await client.variables.sauvegarder_noms_variable(id_variable=id_var, noms={"fr": "Précipitation"})
 
             données = await client.obt_données_tableau(
                 id_tableau=id_tableau, langues=["த", "fr"], formatDonnées="pandas"
@@ -178,12 +178,12 @@ class TestClient(TestCase):
 
         async with ouvrir_client() as client:
             id_var_tmaxi = await client.variables.créerVariable(catégorie="numérique")
-            await client.variables.ajouter_noms_variable(id=id_var_tmaxi, noms={"fr": "Température maximale"})
+            await client.variables.sauvegarder_noms_variable(idVariable=id_var_tmaxi, noms={"fr": "Température maximale"})
 
             id_var_tmini = await client.variables.créerVariable(catégorie="numérique")
-            await client.variables.ajouter_noms_variable(id=id_var_tmini, noms={"fr": "Température minimale"})
+            await client.variables.sauvegarder_noms_variable(idVariable=id_var_tmini, noms={"fr": "Température minimale"})
 
-            fs = await client.recherche.rechercher_variable_selon_nom(
+            fs = await client.recherche.rechercher_variables_selon_nom(
                 nom_variable="Température",
                 f=fonction_suivi_recherche,
                 nRésultatsDésirés=2

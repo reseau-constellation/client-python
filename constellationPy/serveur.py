@@ -36,7 +36,7 @@ def lancer_serveur(
 
     vérifier_installation_constellation(exe)
 
-    cmd = [*exe, "lancer"]
+    cmd = [*exe, "lancer", "-m"]
     if port:
         cmd += ["-p", str(port)]
     if orbite:
@@ -54,9 +54,11 @@ def lancer_serveur(
     for ligne in iter(p.stdout.readline, ''):
         logging.debug("Message du serveur : " + ligne)
 
-        if ":" in ligne:
-            port = int(ligne.split(":")[1])
-            return p, port
+        if "MESSAGE MACHINE" in ligne:
+            message = json.loads(ligne.split(":", 1)[1])
+            if message["type"] == "NŒUD PRÊT":
+                port = message["port"]
+                return p, port
 
     raise ConnectionError("Le serveur n'a pas répondu.")
 

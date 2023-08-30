@@ -308,7 +308,7 @@ class Client(trio.abc.AsyncResource):
             variables = await une_fois(f_suivi_variables, soimême.pouponnière)
 
             async def f_suivi_colonnes(f):
-                return await soimême.tableaux.suivreColonnes(
+                return await soimême.tableaux.suivreColonnesTableau(
                     idTableau=id_tableau, f=f
                 )
 
@@ -317,7 +317,7 @@ class Client(trio.abc.AsyncResource):
             for id_variable in variables:
                 async def f_suivi_nom_variable(f):
                     return await soimême.variables.suivre_noms_variable(
-                        id=id_variable, f=f
+                        id_variable=id_variable, f=f
                     )
 
                 noms_variable = await une_fois(f_suivi_nom_variable, soimême.pouponnière)

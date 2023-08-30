@@ -17,7 +17,7 @@ class TestSync(unittest.TestCase):
         cls.client = ClientSync()
 
     def test_action_sync(soimême):
-        id_orbite = soimême.client.obtIdOrbite()
+        id_orbite = soimême.client.obtIdDispositif()
         soimême.assertIsInstance(id_orbite, str)
 
     @unittest.skipIf(VRAI_SERVEUR, "Test uniquement pour le faux serveur.")
@@ -66,7 +66,7 @@ class TestSync(unittest.TestCase):
         id_col = soimême.client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_variable=id_var)
         soimême.client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
 
-        soimême.client.variables.ajouter_noms_variable(id=id_var, noms={"fr": "Précipitation"})
+        soimême.client.variables.sauvegarder_noms_variable(id_variable=id_var, noms={"fr": "Précipitation"})
 
         données = soimême.client.obt_données_tableau(id_tableau=id_tableau, langues=["த", "fr"], formatDonnées="pandas")
 
