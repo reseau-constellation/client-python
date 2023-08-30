@@ -10,7 +10,7 @@ try:
     from constellationPy.const import V_SERVEUR_NÉCESSAIRE
 except ModuleNotFoundError:
     # Pour tests sur Ubuntu... pas sûr pourquoi ça ne fonctionne pas...
-    V_SERVEUR_NÉCESSAIRE = "^0.1.9"
+    V_SERVEUR_NÉCESSAIRE = "^0.3.2"
 
 _données = {}
 
@@ -176,34 +176,34 @@ def écrire_à_stdout(*message: str):
     sys.stdout.flush()
 
 
-@click.group(cls=DefaultGroup, default='lancer', default_if_no_args=True)
+@click.group(cls=DefaultGroup, default="lancer", default_if_no_args=True)
 def cli():
     pass
 
 
-@cli.command("v-constl")
+@click.command()
 def v_constl():
     écrire_à_stdout("1.0.1")
 
-
-@cli.command("v-constl-obli")
-def v_constl():
+@click.command()
+def v_constl_obli():
     écrire_à_stdout("^1.0.0")
 
 
-@cli.command("version")
+@click.command()
 def version():
     écrire_à_stdout(V_SERVEUR_NÉCESSAIRE.strip("^"))
     return
 
 
-@cli.command("lancer")
+@click.command()
 @click.option("-p", '--port', default=None)
-def lancer(port):
+@click.option("-m", is_flag=True, default=False)
+def lancer(port, m):
     async def main():
-        écrire_à_stdout("Initialisation du serveur")
         port_ = port or 5000
-        écrire_à_stdout("port", port_)
+        if m:
+            écrire_à_stdout("MESSAGE MACHINE : {\"type\": \"NŒUD PRÊT\", \"port\": " + str(port_) + "}")
 
         async with trio.open_nursery() as pouponnière:
             async def _lancer_port_ws(p):
@@ -232,6 +232,10 @@ def lancer(port):
 
     trio.run(main)
 
+cli.add_command(v_constl)
+cli.add_command(v_constl_obli)
+cli.add_command(version)
+cli.add_command(lancer)
 
 if __name__ == '__main__':
     cli()

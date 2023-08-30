@@ -147,8 +147,8 @@ def _obt_version(commande: TypeExe, arg="-v") -> Optional[str]:
         return
 
     logging.debug(résultat.returncode)
-    logging.debug("stdout" + résultat.stdout.decode())
-    logging.debug("stderr" + résultat.stderr.decode())
+    logging.debug("stdout: " + résultat.stdout.decode())
+    logging.debug("stderr: " + résultat.stderr.decode())
     if résultat.returncode == 0:
         return résultat.stdout.decode().replace("\r", '').replace("\n", '')
     elif "is not recognized as an internal or external command" in résultat.stderr.decode():
@@ -251,7 +251,7 @@ def _vérifier_installation(exe_: Union[str, Tuple[str]]) -> True:
 
     # Obtenir version serveur
     version_serveur = obt_version_serveur(exe_)
-    logging.debug("version_serveur" + str(version_serveur))
+    logging.debug("version_serveur: " + str(version_serveur))
 
     # Si serveur non installé, erreur
     if not version_serveur:
