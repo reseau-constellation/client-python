@@ -338,6 +338,9 @@ class Client(trio.abc.AsyncResource):
             raise ValueError(formatDonnées)
 
     async def obt_données_réseau(soimême, motclef_unique: str, nom_unique_tableau: str):
+        """
+        À faire !
+        """
         async def f_async(f):
             return await soimême.réseau.suivre_données(motclef_unique, nom_unique_tableau, f)
 
