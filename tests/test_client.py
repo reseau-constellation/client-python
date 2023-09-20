@@ -159,13 +159,13 @@ class TestClient(TestCase):
             soimême.assertListEqual(résultat["x"], list(range(3)))
 
             await fs["fChangerN"](6)
-            await trio.sleep(.1)
+            await trio.sleep(.2)
             soimême.assertListEqual(résultat["x"], list(range(6)))
 
             # Plus de changements après fOublier
             await fs["fOublier"]()
             await fs["fChangerN"](3)
-            await trio.sleep(.1)
+            await trio.sleep(.2)
             soimême.assertListEqual(résultat["x"], list(range(6)))
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
