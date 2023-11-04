@@ -171,6 +171,7 @@ class Client(trio.abc.AsyncResource):
                 raise RuntimeError(e)
 
     async def _envoyer_message(soimême, message: Dict) -> None:
+        logging.debug("Message envoyé, " + json.dumps(message, ensure_ascii=False))
         await soimême.connexion.send_message(json.dumps(message, ensure_ascii=False))
 
     async def _appeler_fonction_action(
@@ -187,7 +188,7 @@ class Client(trio.abc.AsyncResource):
         }
         await soimême._envoyer_message(message)
         val = await soimême._attendre_message(id_, soimême.canal_réception.clone())
-
+        logging.debug(f"Action terminée: {id_}")
         if val and val["type"] == "action":
             return val["résultat"] if "résultat" in val else None
         else:
@@ -234,18 +235,24 @@ class Client(trio.abc.AsyncResource):
                         logging.debug("message reçu : " + json.dumps(json.loads(val), ensure_ascii=False))
                         val = json.loads(val)
                         if "id" in val and val["id"] == id_:
+                            logging.debug("id correspond")
                             if val["type"] == "suivrePrêt":
                                 prêt["statut"] = val
                             elif val["type"] == "suivre":
+                                logging.debug("type suivre")
                                 if inspect.iscoroutinefunction(f):
+                                    logging.debug("coroutine")
                                     soimême.pouponnière.start_soon(f, val["résultat"])
                                 else:
+                                    logging.debug("synchrone")
                                     f(val["résultat"])
 
         context = await soimême.pouponnière.start(_suiveur, soimême.canal_réception.clone())
         await soimême._envoyer_message(message)
 
         async def f_oublier():
+            logging.debug("on oublie")
+            logging.debug(id_)
             message_oublier = {
                 "type": "retour",
                 "id": id_,

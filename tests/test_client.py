@@ -77,13 +77,13 @@ class TestClient(TestCase):
             async def f_suivre_données(éléments):
                 if éléments:
                     résultat["élément"] = éléments
-                    soimême.assertEqual(éléments[0]["données"][id_col], 123)
                     await oublier_données()
 
-            oublier_données = await client.tableaux.suivreDonnées(id_tableau=id_tableau, f=f_suivre_données)
             await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
+            oublier_données = await client.tableaux.suivreDonnées(id_tableau=id_tableau, f=f_suivre_données)
 
             soimême.assertIsNotNone(résultat["élément"])
+            soimême.assertEqual(résultat["élément"][0]["données"][id_col], 123)
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     async def test_obt_données_tableau(soimême):
@@ -93,15 +93,16 @@ class TestClient(TestCase):
 
             id_var = await client.variables.créerVariable(catégorie="numérique")
             id_col = await client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_variable=id_var)
-            empreinte_élément = await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
+            id_élément = await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
 
             données = await client.obt_données_tableau(id_tableau=id_tableau)
 
         soimême.assertEqual(données, [
             {
                 'données': {
-                    id_col: 123, 'id': données[0]['données']['id']
-                }, 'empreinte': empreinte_élément
+                    id_col: 123,
+                },
+                'id': id_élément[0]
             }
         ])
 
@@ -120,7 +121,7 @@ class TestClient(TestCase):
                 id_tableau=id_tableau, langues=["த", "fr"], formatDonnées="pandas"
             )
 
-        réf = pd.DataFrame({"Précipitation": [123], "id": données["id"]})
+        réf = pd.DataFrame({"Précipitation": [123]})
         pdt.assert_frame_equal(données.sort_index(axis=1), réf.sort_index(axis=1))
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
@@ -136,7 +137,7 @@ class TestClient(TestCase):
 
             données = await client.obt_données_tableau(id_tableau=id_tableau, formatDonnées="pandas")
 
-        réf = pd.DataFrame({id_col: [123], "id": données["id"]})
+        réf = pd.DataFrame({id_col: [123]})
         pdt.assert_frame_equal(données, réf)
 
     @unittest.skip("Doit être implémenté dans l'IPA de Constellation")
@@ -193,6 +194,7 @@ class TestClient(TestCase):
                 f=fonction_suivi_recherche,
                 nRésultatsDésirés=2
             )
+            await trio.sleep(.1)
             soimême.assertEqual(2, len(résultat["vars"]), "Taille initiale")
 
             await fs["fChangerN"](1)

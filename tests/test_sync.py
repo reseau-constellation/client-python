@@ -46,14 +46,14 @@ class TestSync(unittest.TestCase):
 
         id_var = soimême.client.variables.créerVariable(catégorie="numérique")
         id_col = soimême.client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_variable=id_var)
-        id_élément = soimême.client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
+        id_élément = soimême.client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})[0]
         données = soimême.client.obt_données_tableau(id_tableau=id_tableau)
 
         soimême.assertEqual(données, [
             {
                 'données': {
-                    id_col: 123, 'id': données[0]['données']['id']
-                }, 'empreinte': id_élément
+                    id_col: 123,
+                }, 'id': id_élément
             }
         ])
 
@@ -70,7 +70,7 @@ class TestSync(unittest.TestCase):
 
         données = soimême.client.obt_données_tableau(id_tableau=id_tableau, langues=["த", "fr"], formatDonnées="pandas")
 
-        réf = pd.DataFrame({"Précipitation": [123], "id": données["id"]})
+        réf = pd.DataFrame({"Précipitation": [123]})
         pdt.assert_frame_equal(données.sort_index(axis=1), réf.sort_index(axis=1))
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
@@ -84,7 +84,7 @@ class TestSync(unittest.TestCase):
 
         données = soimême.client.obt_données_tableau(id_tableau=id_tableau, formatDonnées="pandas")
 
-        réf = pd.DataFrame({id_col: [123], "id": données["id"]})
+        réf = pd.DataFrame({id_col: [123]})
         pdt.assert_frame_equal(données, réf)
 
     @unittest.skip("Doit être implémenté dans l'IPA de Constellation")
