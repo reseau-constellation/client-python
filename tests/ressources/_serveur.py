@@ -13,6 +13,7 @@ try:
 except ModuleNotFoundError:
     # Pour tests sur Ubuntu... je ne suis pas sûr pourquoi ça ne fonctionne pas...
     V_SERVEUR_NÉCESSAIRE = "^0.3.5"
+    V_IPA_NÉCESSAIRE = "^0.9.13"
 
 _données = {}
 
