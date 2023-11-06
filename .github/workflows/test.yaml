@@ -98,7 +98,7 @@ jobs:
 
   publier:
     runs-on: "macos-latest"
-    if: github.ref_type == 'tag'
+    # if: github.ref_type == 'tag'
     defaults:
       run:
         shell: bash
