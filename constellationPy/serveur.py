@@ -89,7 +89,7 @@ def obtenir_contexte() -> Optional[int]:
 
 
 def mettre_constellation_à_jour(exe: TypeExe = EXE_CONSTL):
-    logging.info("Mise à jour de Constellation")
+    logging.debug("Mise à jour de Constellation")
     assurer_npm_pnpm_installés()
 
     mettre_serveur_à_jour(exe)
@@ -101,7 +101,7 @@ def mettre_serveur_à_jour(exe: TypeExe = EXE_CONSTL):
 
     if not serveur_compatible(version_serveur):
         version_serveur_désirée = obt_version_serveur_plus_récente_compatible()
-        logging.info(
+        logging.debug(
             f"Mise à jour du serveur Constellation (version présente : {version_serveur}; "
             f"version désirée : {version_serveur_désirée})")
         installer_serveur(version_serveur_désirée)
@@ -169,9 +169,9 @@ def mettre_ipa_à_jour(exe: TypeExe = EXE_CONSTL):
     # Si @constl/ipa n'est pas installée, installer @constl/ipa et obtenir versions compatibles avec serveur
     ipa_installée = ipa_est_installée(exe)
     if not ipa_installée:
-        logging.info("Installation de l'IPA de Constellation")
+        logging.debug("Installation de l'IPA de Constellation")
         installer_ipa()
-        logging.info("Constellation installée")
+        logging.debug("Constellation installée")
 
     # Obtenir versions ipa compatibles avec serveur
     version_ipa = obt_version_ipa(exe)
@@ -187,7 +187,7 @@ def mettre_ipa_à_jour(exe: TypeExe = EXE_CONSTL):
 
     # Installer @constl/ipa à la version la plus récente compatible avec le serveur
     if version_ipa != version_ipa_désirée:
-        logging.info(f"Mise à jour de l'IPA de Constellation (courante: {version_ipa}, désirée: {version_ipa_désirée})")
+        logging.debug(f"Mise à jour de l'IPA de Constellation (courante: {version_ipa}, désirée: {version_ipa_désirée})")
         installer_ipa(version_ipa_désirée)
 
 
@@ -271,11 +271,14 @@ def _vérifier_installation(exe_: Union[str, Tuple[str]]) -> True:
 
     # Vérifier version @constl/serveur compatible avec client python
     if not serveur_compatible(version_serveur):
-        raise ErreurInstallationConstellation(message_erreur)
+        raise ErreurInstallationConstellation(
+            message_erreur + f"\nVersion présente de @constl/serveur : {version_serveur}"
+        )
 
     # Vérifier version @constl/ipa compatible avec @constl/serveur
     version_ipa = obt_version_ipa(exe_)
     spécifications_compatibles = SimpleSpec(_obt_version(exe_, "v-constl-obli"))
+    logging.debug(f"version ipa {version_ipa}")
     if version_ipa not in spécifications_compatibles or version_ipa not in versions_ipa_compatibles:
         raise ErreurInstallationConstellation(
             message_erreur + f"\nVersion présente de @constl/ipa : {version_ipa}"
@@ -289,7 +292,7 @@ def vérifier_installation_constellation(exe: TypeExe = EXE_CONSTL):
 def assurer_npm_pnpm_installés():
     version_npm = obt_version_npm()
     if not version_npm:
-        logging.info("Installation de npm")
+        logging.debug("Installation de npm")
         try:
             _installer_nodejs()
         except Exception:
@@ -298,7 +301,7 @@ def assurer_npm_pnpm_installés():
 
     version_pnpm = obt_version_pnpm()
     if not version_pnpm:
-        logging.info("Installation de pnpm")
+        logging.debug("Installation de pnpm")
         résultat_npm = subprocess.run(
             ["npm", "install", "-g", "pnpm"], capture_output=True, shell=platform.system() == "Windows"
         )
@@ -340,7 +343,7 @@ def installer_de_pnpm(paquet: str, version: Union[Version, SimpleSpec, str] = "l
         shell=platform.system() == "Windows"
     )
 
-    logging.info(f"Paquet {paquet}, version {version} installé.")
+    logging.debug(f"Paquet {paquet}, version {version} installé.")
 
     if résultat_pnpm.returncode != 0:
         raise ConnectionError(
