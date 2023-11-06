@@ -157,9 +157,13 @@ class TestClient(TestCase):
         résultat = {}
 
         prêt = trio.Event()
+        six_résultats = trio.Event()
+
         def traiter_résultat(x):
             résultat["x"] = x
             prêt.set()
+            if len(x) >= 6:
+                six_résultats.set()
 
         async with ouvrir_client() as client:
             fs = await client.fonction_recherche(f=traiter_résultat, nRésultatsDésirés=3)
@@ -167,7 +171,7 @@ class TestClient(TestCase):
             soimême.assertListEqual(résultat["x"], list(range(3)))
 
             await fs["fChangerN"](6)
-            await trio.sleep(.2)
+            await six_résultats.wait()
             soimême.assertListEqual(résultat["x"], list(range(6)))
 
             # Plus de changements après fOublier
@@ -180,8 +184,18 @@ class TestClient(TestCase):
     async def test_recherche(soimême):
         résultat = {}
 
+        deux_résultats = trio.Event()
+        un_résultat = trio.Event()
+        deux_à_nouveau = trio.Event()
         def fonction_suivi_recherche(x):
             résultat["vars"] = x
+            if len(x) > 1:
+                if un_résultat.is_set():
+                    deux_à_nouveau.set()
+                else:
+                    deux_résultats.set()
+            elif deux_résultats.is_set() and len(x) == 1:
+                un_résultat.set()
 
         async with ouvrir_client() as client:
             id_var_tmaxi = await client.variables.créerVariable(catégorie="numérique")
@@ -201,15 +215,15 @@ class TestClient(TestCase):
                 f=fonction_suivi_recherche,
                 nRésultatsDésirés=2
             )
-            await trio.sleep(.1)
+            await deux_résultats.wait()
             soimême.assertEqual(2, len(résultat["vars"]), "Taille initiale")
 
             await fs["fChangerN"](1)
-            await trio.sleep(.1)
+            await un_résultat.wait()
             soimême.assertEqual(1, len(résultat["vars"]), "Diminuer taille")
 
             await fs["fChangerN"](2)
-            await trio.sleep(.1)
+            await deux_à_nouveau.wait()
             soimême.assertEqual(2, len(résultat["vars"]), "Augmenter taille")
 
             await fs["fOublier"]()
