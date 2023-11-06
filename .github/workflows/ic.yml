@@ -40,6 +40,6 @@ jobs:
     permissions:
       contents: write # Allows this job to create releases
     with:
-      dry-run: ${{ github.ref_name == 'main' }}
+      dry-run: ${{ github.ref_name == 'master' }}
     needs: [ tests ]
     uses: ./.github/workflows/pypi.yml
