@@ -1,7 +1,6 @@
 import io
 import json
 import sys
-from random import random
 
 import click
 import trio
