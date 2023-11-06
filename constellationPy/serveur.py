@@ -277,7 +277,9 @@ def _vérifier_installation(exe_: Union[str, Tuple[str]]) -> True:
     version_ipa = obt_version_ipa(exe_)
     spécifications_compatibles = SimpleSpec(_obt_version(exe_, "v-constl-obli"))
     if version_ipa not in spécifications_compatibles or version_ipa not in versions_ipa_compatibles:
-        raise ErreurInstallationConstellation(message_erreur)
+        raise ErreurInstallationConstellation(
+            message_erreur + f"\nVersion présente de @constl/ipa : {version_ipa}"
+        )
 
 
 def vérifier_installation_constellation(exe: TypeExe = EXE_CONSTL):
