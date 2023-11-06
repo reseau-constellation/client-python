@@ -321,13 +321,13 @@ class Client(trio.abc.AsyncResource):
         else:
             raise ValueError(formatDonnées)
 
-    async def obt_données_réseau(soimême, motclef_unique: str, nom_unique_tableau: str):
+    async def obt_données_nuée(soimême, id_nuée: str, clef_tableau: str, langues: list[str] = None):
         """
         À faire !
         """
 
         async def f_async(f):
-            return await soimême.réseau.suivre_données(motclef_unique, nom_unique_tableau, f)
+            return await soimême.nuées.suivre_données_exportation(id_nuée, clef_tableau, langues, f)
 
         return await une_fois(f_async, soimême.pouponnière)
 
