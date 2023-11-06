@@ -89,25 +89,6 @@ class Client(trio.abc.AsyncResource):
         soimême._client_original._écouteurs = val
 
     @property
-    def canaux(soimême) -> Tuple[trio.MemorySendChannel, trio.MemoryReceiveChannel]:
-        canaux = soimême._client_original._canaux
-        if not canaux:
-            raise ErreurClientNonInitialisé
-        return canaux
-
-    @canaux.setter
-    def canaux(soimême, val):
-        soimême._client_original._canaux = val
-
-    @property
-    def canal_envoie(soimême) -> trio.MemorySendChannel:
-        return soimême.canaux[0]
-
-    @property
-    def canal_réception(soimême) -> trio.MemoryReceiveChannel:
-        return soimême.canaux[1]
-
-    @property
     def canal_erreurs(soimême) -> trio.MemorySendChannel:
         return soimême._client_original._canal_erreurs
 
@@ -120,7 +101,6 @@ class Client(trio.abc.AsyncResource):
         soimême.connexion = await tw.connect_websocket_url(soimême.pouponnière, url)
 
         # démarrer l'écoute
-        soimême.canaux = trio.open_memory_channel(0)
         soimême._context_annuler_écoute = await soimême.pouponnière.start(soimême._écouter)
 
     async def aclose(soimême):

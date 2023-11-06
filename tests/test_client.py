@@ -215,7 +215,7 @@ class TestClient(TestCase):
 
             await fs["fOublier"]()
 
-    @unittest.skip()
+    @unittest.skip("va donc savoir")
     async def test_canal_erreurs(soimême):
 
         async def coroutine_client(pouponnière_, canal_envoie_erreur_):
