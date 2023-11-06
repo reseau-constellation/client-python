@@ -215,14 +215,15 @@ class TestClient(TestCase):
 
             await fs["fOublier"]()
 
-    @unittest.skip("va donc savoir")
     async def test_canal_erreurs(soimême):
 
         async def coroutine_client(pouponnière_, canal_envoie_erreur_):
             async with canal_envoie_erreur_:
                 async with Client(pouponnière_) as client:
                     await client.connecter(canal_envoie_erreur_)
+                    logging.debug("avant cette_fonction_nexiste_pas")
                     await client.cette_fonction_nexiste_pas()
+                    logging.debug("après cette_fonction_nexiste_pas")
 
         erreurs = []
 

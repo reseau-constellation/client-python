@@ -135,13 +135,12 @@ class Client(trio.abc.AsyncResource):
                 type_ = m_json["type"]
 
                 logging.debug(soimême.écouteurs)
-                if type_ in ["suivre", "suivrePrêt", "action"] and "id" in m_json:
-                    if m_json["id"] in soimême.écouteurs:
-                        logging.debug("Id correspond " + m_json["id"])
-                        logging.debug(soimême.écouteurs)
-                        await soimême.écouteurs[m_json["id"]](m_json)
+                if "id" in m_json and m_json["id"] in soimême.écouteurs:
+                    logging.debug("Id correspond " + m_json["id"])
+                    logging.debug(soimême.écouteurs)
+                    await soimême.écouteurs[m_json["id"]](m_json)
 
-                elif type_ == "erreur":
+                if type_ == "erreur":
                     # On rapporte ici uniquement les erreurs génériques (non spécifiques à une requête)
                     if "id" in m_json and soimême.canal_erreurs:
                         m = {"erreur": m_json["erreur"]}
@@ -149,9 +148,6 @@ class Client(trio.abc.AsyncResource):
                         await soimême.canal_erreurs.send(json.dumps(m))
 
                     soimême._erreur(m_json["erreur"])
-
-                else:
-                    soimême._erreur(f"Type inconnu {type_} dans message {m_json}")
 
     def _erreur(soimême, e: str) -> None:
         soimême.erreurs.insert(0, e)
@@ -200,6 +196,8 @@ class Client(trio.abc.AsyncResource):
                     "nous demander d'intervenir :\n"
                     f"\t{LIEN_SIGNALEMENT_ERREURS}"
                 )
+                retour["val"] = None
+                retour["prêt"].set()
 
         soimême._enregistrer_écouteur(id_, f_suivi)
         await soimême._envoyer_message(message)
