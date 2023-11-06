@@ -9,10 +9,10 @@ from click_default_group import DefaultGroup
 from trio_websocket import serve_websocket, ConnectionClosed, WebSocketConnection
 
 try:
-    from constellationPy.const import V_SERVEUR_NÉCESSAIRE
+    from constellationPy.const import V_SERVEUR_NÉCESSAIRE, V_IPA_NÉCESSAIRE
 except ModuleNotFoundError:
     # Pour tests sur Ubuntu... je ne suis pas sûr pourquoi ça ne fonctionne pas...
-    V_SERVEUR_NÉCESSAIRE = "^0.3.2"
+    V_SERVEUR_NÉCESSAIRE = "^0.3.5"
 
 _données = {}
 
@@ -187,12 +187,12 @@ def cli():
 
 @click.command()
 def v_constl():
-    écrire_à_stdout("1.0.1")
+    écrire_à_stdout(V_IPA_NÉCESSAIRE.strip("^"))
 
 
 @click.command()
 def v_constl_obli():
-    écrire_à_stdout("^1.0.0")
+    écrire_à_stdout(V_IPA_NÉCESSAIRE)
 
 
 @click.command()

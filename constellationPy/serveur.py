@@ -272,7 +272,7 @@ def _vérifier_installation(exe_: Union[str, Tuple[str]]) -> True:
     # Vérifier version @constl/serveur compatible avec client python
     if not serveur_compatible(version_serveur):
         raise ErreurInstallationConstellation(
-            message_erreur + f"\nVersion présente de @constl/serveur : {version_serveur}"
+            message_erreur + f"\nVersion présente de {PAQUET_SERVEUR} : {version_serveur}"
         )
 
     # Vérifier version @constl/ipa compatible avec @constl/serveur
@@ -281,7 +281,7 @@ def _vérifier_installation(exe_: Union[str, Tuple[str]]) -> True:
     logging.debug(f"version ipa {version_ipa}")
     if version_ipa not in spécifications_compatibles or version_ipa not in versions_ipa_compatibles:
         raise ErreurInstallationConstellation(
-            message_erreur + f"\nVersion présente de @constl/ipa : {version_ipa}"
+            message_erreur + f"\nVersion présente de {PAQUET_IPA} : {version_ipa}\n Version requise : {spécifications_compatibles} et {versions_ipa_compatibles}"
         )
 
 
