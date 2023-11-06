@@ -1,0 +1,45 @@
+# Processus de base pour l'intégration continue
+name: Client Python
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - 'renovate/**'
+    paths-ignore:
+      - '.github/**'
+      - '!.github/workflows/ic.yml'
+      - '!.github/workflows/pypi.yml'
+      - '!.github/workflows/test.yml'
+      - '**.md'
+      - .editorconfig
+      - .gitignore
+      - '.idea/**'
+      - '.vscode/**'
+  pull_request:
+    paths-ignore:
+      - '.github/**'
+      - '!.github/workflows/ic.yml'
+      - '!.github/workflows/pypi.yml'
+      - '!.github/workflows/test.yml'
+      - '**.md'
+      - .editorconfig
+      - .gitignore
+      - '.idea/**'
+      - '.vscode/**'
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
+  pypi:
+    permissions:
+      contents: write # Allows this job to create releases
+    with:
+      dry-run: ${{ github.ref_name == 'main' }}
+    needs: [ tests ]
+    uses: ./.github/workflows/pypi.yml
