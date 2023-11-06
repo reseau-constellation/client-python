@@ -261,7 +261,7 @@ async def principale():
             oublier_données = await client.tableaux.suivre_données(id_tableau=id_tableau, f=print)
             await trio.sleep(15)
 
-            oublier_données()  # Maintenant on ne recevra plus les mises à jour des données
+            oublier_données()  # Maintenant, on ne recevra plus les mises à jour des données
 
 
 trio.run(principale)
