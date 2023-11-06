@@ -98,11 +98,11 @@ jobs:
 
   publier:
     runs-on: "macos-latest"
-    # if: github.ref_type == 'tag'
+    if: github.ref_type == 'tag'
     defaults:
       run:
         shell: bash
-    # needs: [ test ]
+    needs: [ test ]
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       - name: Installer Python ${{ matrix.python-version }}
