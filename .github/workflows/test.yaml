@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11"]
-        os: [ubuntu-latest]
+        os: [macos-latest]
       fail-fast: false
 
     defaults:
@@ -114,6 +114,26 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
+      #----------------------------------------------
+      #       load cached venv if cache exists
+      #----------------------------------------------
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      #----------------------------------------------
+      # install dependencies if cache does not exist
+      #----------------------------------------------
+      - name: Installer dépendances
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+      #----------------------------------------------
+      # install your root project, if required
+      #----------------------------------------------
+      - name: Installer la librairie
+        run: poetry install --no-interaction
 
       - name: Configurer mot de passe
         run: poetry config pypi-token.pypi "${{ secrets.PYPI_API_KEY }}"
