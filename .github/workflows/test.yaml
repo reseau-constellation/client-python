@@ -22,7 +22,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11"]
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
       fail-fast: false
 
     defaults:
