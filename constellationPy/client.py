@@ -114,12 +114,12 @@ class Client(trio.abc.AsyncResource):
             await soimême._connexion.aclose()
             soimême._connexion = None
 
+        soimême.écouteurs = {}
+
     def _enregistrer_écouteur(soimême, id_: str, f):
-        logging.debug("enregistrement écouteur " + id_)
         soimême.écouteurs[id_] = f
 
     def _effacer_écouteur(soimême, id_: str):
-        logging.debug("efface écouteur " + id_)
         soimême.écouteurs.pop(id_)
 
     async def _écouter(soimême, task_status=trio.TASK_STATUS_IGNORED):
@@ -134,17 +134,13 @@ class Client(trio.abc.AsyncResource):
                 m_json = json.loads(message)
                 type_ = m_json["type"]
 
-                logging.debug(soimême.écouteurs)
                 if "id" in m_json and m_json["id"] in soimême.écouteurs:
-                    logging.debug("Id correspond " + m_json["id"])
-                    logging.debug(soimême.écouteurs)
                     await soimême.écouteurs[m_json["id"]](m_json)
 
                 if type_ == "erreur":
                     # On rapporte ici uniquement les erreurs génériques (non spécifiques à une requête)
                     if "id" in m_json and soimême.canal_erreurs:
                         m = {"erreur": m_json["erreur"]}
-                        logging.debug("On envoie message erreur " + json.dumps(m_json, ensure_ascii=False))
                         await soimême.canal_erreurs.send(json.dumps(m))
 
                     soimême._erreur(m_json["erreur"])
@@ -182,7 +178,6 @@ class Client(trio.abc.AsyncResource):
         }
 
         async def f_suivi(v):
-            logging.debug("Message action " + json.dumps(v, ensure_ascii=False))
             if v["type"] == "action":
                 retour["val"] = v["résultat"] if "résultat" in v else None
                 retour["prêt"].set()
@@ -203,7 +198,7 @@ class Client(trio.abc.AsyncResource):
         await soimême._envoyer_message(message)
 
         await retour["prêt"].wait()
-        logging.debug(f"Action terminée: {id_}")
+
         return retour["val"]
 
     async def _appeler_fonction_suivre(
@@ -238,20 +233,15 @@ class Client(trio.abc.AsyncResource):
                 retour["statut"] = val
                 retour["prêt"].set()
             elif val["type"] == "suivre":
-                logging.debug("type suivre")
                 if inspect.iscoroutinefunction(f):
-                    logging.debug("coroutine " + json.dumps(val, ensure_ascii=False))
                     soimême.pouponnière.start_soon(f, val["données"])
                 else:
-                    logging.debug("synchrone " + json.dumps(val, ensure_ascii=False))
                     f(val["données"])
 
         soimême._enregistrer_écouteur(id_, f_suivi)
         await soimême._envoyer_message(message)
 
         async def f_oublier():
-            logging.debug("on oublie")
-            logging.debug(id_)
             message_oublier = {
                 "type": "retour",
                 "id": id_,

@@ -76,7 +76,6 @@ class TestClient(TestCase):
             résultat = {}
             prêt = trio.Event()
             async def f_suivre_données(éléments):
-                logging.debug("ici" + json.dumps(éléments, ensure_ascii=False))
                 if éléments:
                     prêt.set()
                     résultat["élément"] = éléments
@@ -221,16 +220,13 @@ class TestClient(TestCase):
             async with canal_envoie_erreur_:
                 async with Client(pouponnière_) as client:
                     await client.connecter(canal_envoie_erreur_)
-                    logging.debug("avant cette_fonction_nexiste_pas")
                     await client.cette_fonction_nexiste_pas()
-                    logging.debug("après cette_fonction_nexiste_pas")
 
         erreurs = []
 
         async def coroutine_erreurs(canal_reçoie_erreur_):
             async with canal_reçoie_erreur_:
                 async for erreur in canal_reçoie_erreur_:
-                    logging.debug("message erreur reçu " + erreur)
                     erreurs.append(json.loads(erreur))
 
         async with trio.open_nursery() as pouponnière:
