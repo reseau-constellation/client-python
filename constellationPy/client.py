@@ -52,6 +52,7 @@ class Client(trio.abc.AsyncResource):
         soimême._canal_erreurs: Optional[trio.MemorySendChannel] = None
         soimême._liste_attributs = _liste_attributs or []
         soimême._context_annuler_écoute: Optional[trio.CancelScope] = None
+        soimême._écouteurs = {}
 
         soimême.erreurs: List[str] = []
 
@@ -78,6 +79,14 @@ class Client(trio.abc.AsyncResource):
     @connexion.setter
     def connexion(soimême, val):
         soimême._client_original._connexion = val
+
+    @property
+    def écouteurs(soimême):
+        return soimême._client_original._écouteurs
+
+    @écouteurs.setter
+    def écouteurs(soimême, val):
+        soimême._client_original._écouteurs = val
 
     @property
     def canaux(soimême) -> Tuple[trio.MemorySendChannel, trio.MemoryReceiveChannel]:
@@ -125,40 +134,44 @@ class Client(trio.abc.AsyncResource):
             await soimême._connexion.aclose()
             soimême._connexion = None
 
+    def _enregistrer_écouteur(soimême, id_: str, f):
+        logging.debug("enregistrement écouteur " + id_)
+        soimême.écouteurs[id_] = f
+
+    def _effacer_écouteur(soimême, id_: str):
+        logging.debug("efface écouteur " + id_)
+        soimême.écouteurs.pop(id_)
+
     async def _écouter(soimême, task_status=trio.TASK_STATUS_IGNORED):
         with trio.CancelScope() as _context:
             task_status.started(_context)
-            async with soimême.canal_envoie as canal_envoie:
-                while True:
-                    try:
-                        message = await soimême.connexion.get_message()
-                    except tw.ConnectionClosed:
-                        break
-                    logging.debug("Message ws reçu : " + json.dumps(json.loads(message), ensure_ascii=False))
-                    m_json = json.loads(message)
-                    type_ = m_json["type"]
+            while True:
+                try:
+                    message = await soimême.connexion.get_message()
+                except tw.ConnectionClosed:
+                    break
+                logging.debug("Message ws reçu : " + json.dumps(json.loads(message), ensure_ascii=False))
+                m_json = json.loads(message)
+                type_ = m_json["type"]
 
-                    if type_ == "suivre":
-                        m_json["résultat"] = m_json.pop("données")
-                        await canal_envoie.send(json.dumps(m_json))
+                logging.debug(soimême.écouteurs)
+                if type_ in ["suivre", "suivrePrêt", "action"] and "id" in m_json:
+                    if m_json["id"] in soimême.écouteurs:
+                        logging.debug("Id correspond " + m_json["id"])
+                        logging.debug(soimême.écouteurs)
+                        await soimême.écouteurs[m_json["id"]](m_json)
 
-                    elif type_ == "suivrePrêt":
-                        await canal_envoie.send(json.dumps(m_json))
+                elif type_ == "erreur":
+                    # On rapporte ici uniquement les erreurs génériques (non spécifiques à une requête)
+                    if "id" in m_json and soimême.canal_erreurs:
+                        m = {"erreur": m_json["erreur"]}
+                        logging.debug("On envoie message erreur " + json.dumps(m_json, ensure_ascii=False))
+                        await soimême.canal_erreurs.send(json.dumps(m))
 
-                    elif type_ == "action":
-                        await canal_envoie.send(json.dumps(m_json))
+                    soimême._erreur(m_json["erreur"])
 
-                    elif type_ == "erreur":
-                        await canal_envoie.send(json.dumps(m_json))
-                        # On rapporte ici uniquement les erreurs génériques (non spécifiques à une requête)
-                        if "id" in m_json and soimême.canal_erreurs:
-                            m = {"erreur": m_json["erreur"]}
-                            await soimême.canal_erreurs.send(json.dumps(m))
-
-                        soimême._erreur(m_json["erreur"])
-
-                    else:
-                        soimême._erreur(f"Type inconnu {type_} dans message {m_json}")
+                else:
+                    soimême._erreur(f"Type inconnu {type_} dans message {m_json}")
 
     def _erreur(soimême, e: str) -> None:
         soimême.erreurs.insert(0, e)
@@ -186,20 +199,34 @@ class Client(trio.abc.AsyncResource):
             "fonction": adresse_fonction,
             "args": args,
         }
+
+        retour = {
+            "prêt": trio.Event(),
+            "val": None
+        }
+
+        async def f_suivi(v):
+            logging.debug("Message action " + json.dumps(v, ensure_ascii=False))
+            if v["type"] == "action":
+                retour["val"] = v["résultat"] if "résultat" in v else None
+                retour["prêt"].set()
+                soimême._effacer_écouteur(id_)
+            else:
+                soimême._erreur(
+                    "Valeur reçue : " + json.dumps(v, ensure_ascii=False, indent=2) +
+                    ". Avez-vous utilisé les bons arguments pour la fonction que vous venez d'appeler ?. \n"
+                    "Si vous êtes sûre que oui, c'est peut-être le serveur local Constellation qui est en grève. \n"
+                    "Si les négotiations n'aboutissent pas, n'hésitez pas à "
+                    "nous demander d'intervenir :\n"
+                    f"\t{LIEN_SIGNALEMENT_ERREURS}"
+                )
+
+        soimême._enregistrer_écouteur(id_, f_suivi)
         await soimême._envoyer_message(message)
-        val = await soimême._attendre_message(id_, soimême.canal_réception.clone())
+
+        await retour["prêt"].wait()
         logging.debug(f"Action terminée: {id_}")
-        if val and val["type"] == "action":
-            return val["résultat"] if "résultat" in val else None
-        else:
-            soimême._erreur(
-                "Valeur reçue : " + json.dumps(val, ensure_ascii=False, indent=2) +
-                ". Avez-vous utilisé les bons arguments pour la fonction que vous venez d'appeler ?. \n"
-                "Le serveur local Constellation semble être en grève. \n"
-                "Si les négotiations n'aboutissent pas, n'hésitez pas à "
-                "nous demander de l'aide :\n"
-                f"\t{LIEN_SIGNALEMENT_ERREURS}"
-            )
+        return retour["val"]
 
     async def _appeler_fonction_suivre(
             soimême,
@@ -223,31 +250,25 @@ class Client(trio.abc.AsyncResource):
             "nomArgFonction": nom_arg_fonction
         }
 
-        prêt = {"statut": False}
+        retour = {
+            "prêt": trio.Event(),
+            "statut": None
+        }
 
-        # https://stackoverflow.com/questions/60674136/python-how-to-cancel-a-specific-task-spawned-by-a-nursery-in-python-trio
-        # https://trio.readthedocs.io/en/stable/reference-core.html#trio.CancelScope
-        async def _suiveur(canal, task_status=trio.TASK_STATUS_IGNORED):
-            with trio.CancelScope() as _context:
-                task_status.started(_context)
-                async with canal:
-                    async for val in canal:
-                        logging.debug("message reçu : " + json.dumps(json.loads(val), ensure_ascii=False))
-                        val = json.loads(val)
-                        if "id" in val and val["id"] == id_:
-                            logging.debug("id correspond")
-                            if val["type"] == "suivrePrêt":
-                                prêt["statut"] = val
-                            elif val["type"] == "suivre":
-                                logging.debug("type suivre")
-                                if inspect.iscoroutinefunction(f):
-                                    logging.debug("coroutine")
-                                    soimême.pouponnière.start_soon(f, val["résultat"])
-                                else:
-                                    logging.debug("synchrone")
-                                    f(val["résultat"])
+        async def f_suivi(val):
+            if val["type"] == "suivrePrêt":
+                retour["statut"] = val
+                retour["prêt"].set()
+            elif val["type"] == "suivre":
+                logging.debug("type suivre")
+                if inspect.iscoroutinefunction(f):
+                    logging.debug("coroutine " + json.dumps(val, ensure_ascii=False))
+                    soimême.pouponnière.start_soon(f, val["données"])
+                else:
+                    logging.debug("synchrone " + json.dumps(val, ensure_ascii=False))
+                    f(val["données"])
 
-        context = await soimême.pouponnière.start(_suiveur, soimême.canal_réception.clone())
+        soimême._enregistrer_écouteur(id_, f_suivi)
         await soimême._envoyer_message(message)
 
         async def f_oublier():
@@ -259,13 +280,11 @@ class Client(trio.abc.AsyncResource):
                 "fonction": "fOublier"
             }
             await soimême._envoyer_message(message_oublier)
-            context.cancel()
+            soimême._effacer_écouteur(id_)
 
-        while not prêt["statut"]:
-            await trio.sleep(0.1)  # C'est laid mais ça fonctionne pour l'instant
-            # await soimême._attendre_message(id_, soimême.canal_réception.clone(), "suivrePrêt")
+        await retour["prêt"].wait()
 
-        valeur_retour = prêt["statut"]
+        valeur_retour = retour["statut"]
 
         def générer_f_retour(nom: str):
             async def f_retour(*args_):
@@ -285,16 +304,6 @@ class Client(trio.abc.AsyncResource):
                 **{fn: générer_f_retour(fn) for fn in valeur_retour["fonctions"]}
             }
         return f_oublier
-
-    async def _attendre_message(soimême, id_: str, canal_réception, type_: str = None):
-        async with canal_réception:
-            async for val in canal_réception:
-                message = json.loads(val)
-                if "id" in message and message["id"] == id_:
-                    if message["type"] == "erreur":
-                        soimême._erreur(message["erreur"])
-                    if not type_ or message["type"] == type_:
-                        return message
 
     async def obt_données_tableau(
             soimême,
@@ -348,6 +357,7 @@ class Client(trio.abc.AsyncResource):
         """
         À faire !
         """
+
         async def f_async(f):
             return await soimême.réseau.suivre_données(motclef_unique, nom_unique_tableau, f)
 
