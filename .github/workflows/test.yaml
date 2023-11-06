@@ -13,7 +13,7 @@ on:
       - '**.md'
 
 jobs:
-  build:
+  test:
 
     runs-on: ${{ matrix.os }}
 
@@ -89,8 +89,42 @@ jobs:
           VRAI_SERVEUR: 1
         run: poetry run coverage run -m pytest --log-cli-level=DEBUG && poetry run coverage xml
         
-      - name: Upload coverage reports to Codecov
+      - name: Envoyer rapports de couverture à Codecov
         uses: codecov/codecov-action@v3
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
+  publier:
+    runs-on: "ubuntu-latest"
+    defaults:
+      run:
+        shell: bash
+    needs: [ test ]
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - name: Installer Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+      - name: Installer Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v3
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Installer dépendances
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+      - name: Installer la librairie
+        run: poetry install --no-interaction
+
+      - name: Configurer mot de passe
+        run: poetry config pypi-token.pypi "${{ secrets.PYPI_API_KEY }}"
+
+      - name: Publier sur PyPI
+        if: github.ref_type == 'tag'
+        run: poetry publish --build
