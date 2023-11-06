@@ -8,10 +8,11 @@ from typing import Optional, TypedDict, Union, List, Tuple
 import urllib3
 from semantic_version import SimpleSpec, Version
 
-from .const import V_SERVEUR_NÉCESSAIRE, PAQUET_SERVEUR, PAQUET_IPA, EXE_CONSTL
+from .const import V_SERVEUR_NÉCESSAIRE, V_IPA_NÉCESSAIRE, PAQUET_SERVEUR, PAQUET_IPA, EXE_CONSTL
 
 TypeExe = Union[str, List[str]]
 versions_serveur_compatibles = SimpleSpec(V_SERVEUR_NÉCESSAIRE)
+versions_ipa_compatibles = SimpleSpec(V_IPA_NÉCESSAIRE)
 
 
 class ErreurInstallationConstellation(ChildProcessError):
@@ -97,6 +98,7 @@ def mettre_constellation_à_jour(exe: TypeExe = EXE_CONSTL):
 
 def mettre_serveur_à_jour(exe: TypeExe = EXE_CONSTL):
     version_serveur = obt_version_serveur(exe)
+
     if not serveur_compatible(version_serveur):
         version_serveur_désirée = obt_version_serveur_plus_récente_compatible()
         logging.info(
@@ -173,7 +175,15 @@ def mettre_ipa_à_jour(exe: TypeExe = EXE_CONSTL):
 
     # Obtenir versions ipa compatibles avec serveur
     version_ipa = obt_version_ipa(exe)
-    version_ipa_désirée = obt_version_ipa_plus_récente_compatible(exe, version_ipa)
+
+    try:
+        version_ipa_désirée = obt_version_ipa_plus_récente_compatible(exe, version_ipa)
+    except StopIteration:
+        raise ErreurInstallationConstellation(
+            "Aucune version de @constl/ipa compatible n'a pu être détectée. "
+            "Essayez de réinstaller manuellement avec :\n "
+            "`pnpm add -g @constl/ipa@latest @constl/serveur@latest`"
+        )
 
     # Installer @constl/ipa à la version la plus récente compatible avec le serveur
     if version_ipa != version_ipa_désirée:
@@ -226,8 +236,10 @@ def obt_version_ipa_plus_récente_compatible(exe: TypeExe = EXE_CONSTL, présent
         versions_disponibles.append(présente)
     versions_disponibles.sort(reverse=True)
 
-    spécifications_compatibles = SimpleSpec(_obt_version(exe, "v-constl-obli"))
-    return next(v for v in versions_disponibles if v in spécifications_compatibles)
+    spécifications_compatibles_serveur = SimpleSpec(_obt_version(exe, "v-constl-obli"))
+    return next(
+        v for v in versions_disponibles if v in spécifications_compatibles_serveur and v in versions_ipa_compatibles
+    )
 
 
 def obt_version_ipa(exe: TypeExe = EXE_CONSTL) -> Optional[Version]:
@@ -264,7 +276,7 @@ def _vérifier_installation(exe_: Union[str, Tuple[str]]) -> True:
     # Vérifier version @constl/ipa compatible avec @constl/serveur
     version_ipa = obt_version_ipa(exe_)
     spécifications_compatibles = SimpleSpec(_obt_version(exe_, "v-constl-obli"))
-    if version_ipa not in spécifications_compatibles:
+    if version_ipa not in spécifications_compatibles or version_ipa not in versions_ipa_compatibles:
         raise ErreurInstallationConstellation(message_erreur)
 
 
@@ -275,7 +287,7 @@ def vérifier_installation_constellation(exe: TypeExe = EXE_CONSTL):
 def assurer_npm_pnpm_installés():
     version_npm = obt_version_npm()
     if not version_npm:
-        logging.info("Installation de NPM")
+        logging.info("Installation de npm")
         try:
             _installer_nodejs()
         except Exception:
@@ -284,7 +296,7 @@ def assurer_npm_pnpm_installés():
 
     version_pnpm = obt_version_pnpm()
     if not version_pnpm:
-        logging.info("Installation de PNPM")
+        logging.info("Installation de pnpm")
         résultat_npm = subprocess.run(
             ["npm", "install", "-g", "pnpm"], capture_output=True, shell=platform.system() == "Windows"
         )
