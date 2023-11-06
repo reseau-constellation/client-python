@@ -292,7 +292,7 @@ def assurer_npm_pnpm_installés():
             _installer_nodejs()
         except Exception:
             # Si on n'a pas réussi à l'installer pour vous, vous devrez le faire manuellement.
-            raise FileNotFoundError("Vous devez installer Node.js au https://nodejs.org/fr/download/.")
+            raise FileNotFoundError("Vous devez installer Node.js au https://nodejs.org/en/download.")
 
     version_pnpm = obt_version_pnpm()
     if not version_pnpm:
