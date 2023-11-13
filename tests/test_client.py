@@ -1,5 +1,4 @@
 import json
-import logging
 import tempfile
 import unittest
 from unittest import TestCase
@@ -75,6 +74,7 @@ class TestClient(TestCase):
 
             résultat = {}
             prêt = trio.Event()
+
             async def f_suivre_données(éléments):
                 if éléments:
                     prêt.set()
@@ -187,6 +187,7 @@ class TestClient(TestCase):
         deux_résultats = trio.Event()
         un_résultat = trio.Event()
         deux_à_nouveau = trio.Event()
+
         def fonction_suivi_recherche(x):
             résultat["vars"] = x
             if len(x) > 1:
