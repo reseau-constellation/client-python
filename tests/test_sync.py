@@ -56,7 +56,7 @@ class TestSync(unittest.TestCase):
                     id_col: 123,
                 }],
                 'fichiersSFIP': {},
-                'nomFichier': id_tableau.lstrip('/orbitdb/')
+                'nomTableau': id_tableau.lstrip('/orbitdb/')
             }
         )
 
