@@ -46,16 +46,19 @@ class TestSync(unittest.TestCase):
 
         id_var = soimême.client.variables.créerVariable(catégorie="numérique")
         id_col = soimême.client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_variable=id_var)
-        id_élément = soimême.client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})[0]
+        soimême.client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
         données = soimême.client.obt_données_tableau(id_tableau=id_tableau)
 
-        soimême.assertEqual(données, [
+        soimême.assertEqual(
+            données,
             {
-                'données': {
+                'données': [{
                     id_col: 123,
-                }, 'id': id_élément
+                }],
+                'fichiersSFIP': {},
+                'nomFichier': id_tableau.lstrip('/orbitdb/')
             }
-        ])
+        )
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     def test_obt_données_tableau_noms_variables(soimême):

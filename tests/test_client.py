@@ -97,18 +97,20 @@ class TestClient(TestCase):
 
             id_var = await client.variables.créerVariable(catégorie="numérique")
             id_col = await client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_variable=id_var)
-            id_élément = await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
+            await client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
 
             données = await client.obt_données_tableau(id_tableau=id_tableau)
 
-        soimême.assertEqual(données, [
+        soimême.assertEqual(
+            données,
             {
-                'données': {
+                'données': [{
                     id_col: 123,
-                },
-                'id': id_élément[0]
+                }],
+                'fichiersSFIP': {},
+                'nomTableau': id_tableau.lstrip("/orbitdb/")
             }
-        ])
+        )
 
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
     async def test_obt_données_tableau_noms_variables(soimême):

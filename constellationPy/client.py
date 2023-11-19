@@ -12,7 +12,7 @@ import trio_websocket as tw
 
 from .const import LIEN_SIGNALEMENT_ERREURS
 from .serveur import obtenir_contexte
-from .utils import à_chameau, à_kebab, fais_rien_asynchrone, une_fois, tableau_à_pandas
+from .utils import à_chameau, à_kebab, fais_rien_asynchrone, une_fois, tableau_exporté_à_pandas
 
 
 # Idée de https://stackoverflow.com/questions/48282841/in-trio-how-can-i-have-a-background-task-that-lives-as-long-as-my-object-does
@@ -280,42 +280,12 @@ class Client(trio.abc.AsyncResource):
             formatDonnées="constellation",
     ):
         async def f_suivi(f):
-            return await soimême.tableaux.suivre_données(id_tableau=id_tableau, f=f)
+            return await soimême.tableaux.suivre_données_exportation(id_tableau=id_tableau, f=f, langues=langues)
 
         données = await une_fois(f_suivi, soimême.pouponnière)
 
-        if langues:
-            langues = [langues] if isinstance(langues, str) else langues
-
-            async def f_suivi_variables(f):
-                return await soimême.tableaux.suivreVariables(
-                    idTableau=id_tableau, f=f
-                )
-
-            variables = await une_fois(f_suivi_variables, soimême.pouponnière)
-
-            async def f_suivi_colonnes(f):
-                return await soimême.tableaux.suivreColonnesTableau(
-                    idTableau=id_tableau, f=f
-                )
-
-            colonnes = await une_fois(f_suivi_colonnes, soimême.pouponnière)
-
-            for id_variable in variables:
-                async def f_suivi_nom_variable(f):
-                    return await soimême.variables.suivre_noms_variable(
-                        id_variable=id_variable, f=f
-                    )
-
-                noms_variable = await une_fois(f_suivi_nom_variable, soimême.pouponnière)
-                meilleure_langue = next((l for l in langues if l in noms_variable), None)
-                if meilleure_langue:
-                    id_col = next(c["id"] for c in colonnes if c["variable"] == id_variable)
-                    for rangée in données:
-                        rangée["données"][noms_variable[meilleure_langue]] = rangée["données"].pop(id_col)
-
         if formatDonnées.lower() == "pandas":
-            return tableau_à_pandas(données)
+            return tableau_exporté_à_pandas(données)
         elif formatDonnées.lower() == "constellation":
             return données
         else:

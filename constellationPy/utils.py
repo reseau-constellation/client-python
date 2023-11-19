@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import inspect
-from typing import Any, TypedDict, Dict, List, Callable, Coroutine
+from typing import Any, TypedDict, Callable, Coroutine
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -70,9 +70,15 @@ async def une_fois(
     return await une_fois_sans_oublier(f_async, pouponnière)
 
 
-type_élément = TypedDict("type_élément", {"empreinte": str, "données": Dict[str, Any]})
-type_tableau = List[type_élément]
+type_élément = TypedDict("type_élément", {"empreinte": str, "données": dict[str, Any]})
+type_tableau = list[type_élément]
+type_tableau_exporté = TypedDict("type_tableau_exporté", {"données": list[dict[str, Any]], "fichiersSFIP": set, "nomTableau": str})
 
+def tableau_exporté_à_pandas(tableau: type_tableau_exporté):
+    données = tableau["données"]
+
+    données_pandas = pd.DataFrame(données)
+    return données_pandas
 
 def tableau_à_pandas(tableau: type_tableau, index_empreinte=False) -> pd.DataFrame:
     index = [x["empreinte"] for x in tableau] if index_empreinte else None
@@ -82,7 +88,7 @@ def tableau_à_pandas(tableau: type_tableau, index_empreinte=False) -> pd.DataFr
     return données_pandas
 
 
-def pandas_à_constellation(données_pandas: pd.DataFrame) -> List[Dict[str, Any]]:
+def pandas_à_constellation(données_pandas: pd.DataFrame) -> list[dict[str, Any]]:
     données = []
     for _, r in données_pandas.iterrows():
         r_finale = {c: v for c, v in r.to_dict().items() if not pd.isna(v)}
