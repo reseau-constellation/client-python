@@ -12,7 +12,7 @@ import trio_websocket as tw
 
 from .const import LIEN_SIGNALEMENT_ERREURS
 from .serveur import obtenir_contexte
-from .utils import à_chameau, à_kebab, fais_rien_asynchrone, une_fois, tableau_exporté_à_pandas
+from .utils import à_chameau, à_kebab, fais_rien_asynchrone, une_fois, tableau_exporté_à_pandas, attendre_stabilité
 
 
 # Idée de https://stackoverflow.com/questions/48282841/in-trio-how-can-i-have-a-background-task-that-lives-as-long-as-my-object-does
@@ -278,11 +278,12 @@ class Client(trio.abc.AsyncResource):
             id_tableau: str,
             langues: Optional[str | list[str]] = None,
             formatDonnées="constellation",
+            patience: int | float=1
     ):
         async def f_suivi(f):
             return await soimême.tableaux.suivre_données_exportation(id_tableau=id_tableau, f=f, langues=langues)
 
-        données = await une_fois(f_suivi, soimême.pouponnière)
+        données = await une_fois(f_suivi, soimême.pouponnière, attendre_stabilité(patience))
 
         if formatDonnées.lower() == "pandas":
             return tableau_exporté_à_pandas(données)
@@ -294,6 +295,7 @@ class Client(trio.abc.AsyncResource):
     async def obt_données_tableau_nuée(
             soimême, id_nuée: str, clef_tableau: str, n_résultats_désirés: int,
             langues: Optional[str | list[str]] = None, formatDonnées="constellation",
+            patience: int | float=1
     ):
         async def f_suivi(f):
             return await soimême.nuées.suivre_données_exportation_tableau(
@@ -302,7 +304,7 @@ class Client(trio.abc.AsyncResource):
                 n_résultats_désirés=n_résultats_désirés, f=f
             )
 
-        données = await une_fois(f_suivi, soimême.pouponnière)
+        données = await une_fois(f_suivi, soimême.pouponnière, attendre_stabilité(patience))
 
         if formatDonnées.lower() == "pandas":
             return tableau_exporté_à_pandas(données)

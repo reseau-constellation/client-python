@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import inspect
-from typing import Any, TypedDict, Callable, Coroutine
+import json
+from typing import Any, TypedDict, Callable, Coroutine, Awaitable, Optional
 from typing import TYPE_CHECKING
 
 import pandas as pd
@@ -34,11 +35,15 @@ async def fais_rien_asynchrone() -> None:
 
 async def une_fois_sans_oublier(
         f_suivre: Callable[[Callable[[Any, str], None]], Coroutine],
-        pouponnière: trio.Nursery
+        pouponnière: trio.Nursery,
+        fCond: Optional[Callable[[Any], Awaitable[bool]]] = None,
 ) -> Any:
     canal_envoie, canal_réception = trio.open_memory_channel(0)
 
     async def f_réception(résultat):
+        if fCond and not await fCond(résultat):
+            return
+
         async with canal_envoie:
             try:
                 await canal_envoie.send(résultat)
@@ -60,7 +65,8 @@ async def une_fois_sans_oublier(
 
 async def une_fois(
         f_suivi: Callable[[Callable[[Any], None]], Coroutine[None, None]],
-        pouponnière: trio.Nursery
+        pouponnière: trio.Nursery,
+        fCond: Optional[Callable[[Any], Awaitable[bool]]] = None,
 ) -> Any:
     async def f_async(f, task_status=trio.TASK_STATUS_IGNORED):
         with trio.CancelScope() as _context:
@@ -72,18 +78,34 @@ async def une_fois(
 
             task_status.started(annuler)
 
-    return await une_fois_sans_oublier(f_async, pouponnière)
+    return await une_fois_sans_oublier(f_async, pouponnière, fCond)
 
+def attendre_stabilité(n: int | float) -> Callable[[Any], Awaitable[bool]]:
+
+    précédente = {}
+    async def stable(val: Any):
+        chaîne_val = json.dumps(val)
+        if "val" in précédente and chaîne_val == précédente["val"]:
+            return False
+
+        précédente["val"] = chaîne_val
+        await trio.sleep(n)
+        return précédente["val"] == chaîne_val
+
+    return stable
 
 type_élément = TypedDict("type_élément", {"empreinte": str, "données": dict[str, Any]})
 type_tableau = list[type_élément]
-type_tableau_exporté = TypedDict("type_tableau_exporté", {"données": list[dict[str, Any]], "fichiersSFIP": set, "nomTableau": str})
+type_tableau_exporté = TypedDict("type_tableau_exporté",
+                                 {"données": list[dict[str, Any]], "fichiersSFIP": set, "nomTableau": str})
+
 
 def tableau_exporté_à_pandas(tableau: type_tableau_exporté):
     données = tableau["données"]
 
     données_pandas = pd.DataFrame(données)
     return données_pandas
+
 
 def tableau_à_pandas(tableau: type_tableau, index_empreinte=False) -> pd.DataFrame:
     index = [x["empreinte"] for x in tableau] if index_empreinte else None
