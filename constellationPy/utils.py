@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import inspect
 import json
+import logging
 from typing import Any, TypedDict, Callable, Coroutine, Awaitable, Optional
 from typing import TYPE_CHECKING
 
@@ -84,7 +85,8 @@ def attendre_stabilité(n: int | float) -> Callable[[Any], Awaitable[bool]]:
 
     précédente = {}
     async def stable(val: Any):
-        chaîne_val = json.dumps(val)
+        chaîne_val = json.dumps(val, ensure_ascii=False)
+
         if "val" in précédente and chaîne_val == précédente["val"]:
             return False
 
