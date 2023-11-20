@@ -90,14 +90,78 @@ class TestSync(unittest.TestCase):
         réf = pd.DataFrame({id_col: [123]})
         pdt.assert_frame_equal(données, réf)
 
-    @unittest.skip("Doit être implémenté dans l'IPA de Constellation")
-    @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur")
-    def test_obt_données_réseau(soimême):
-        # client = ClientSync()
-        # données = client.obt_données_réseau("clef unique bd", "clef unique tableau")
-        # print(données)
-        raise NotImplementedError
-        # soimême.assertEqual(expected, result)
+    @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
+    def test_obt_données_tableau_nuée(soimême):
+        clef_tableau = "clef"
+
+        id_nuée = soimême.client.nuées.créer_nuée()
+        id_var = soimême.client.variables.créerVariable(catégorie="numérique")
+        id_tableau = soimême.client.nuées.ajouterTableauNuée(
+            idNuée=id_nuée,
+            clefTableau=clef_tableau,
+        )
+        id_col = soimême.client.nuées.ajouterColonneTableauNuée(
+            id_tableau=id_tableau,
+            id_variable=id_var
+        )
+        schéma = soimême.client.nuées.générerSchémaBdNuée(id_nuée=id_nuée, licence="ODbl-1_0")
+
+        soimême.client.bds.ajouterÉlémentÀTableauUnique(
+            schémaBd=schéma,
+            id_nuée_unique=id_nuée,
+            clefTableau=clef_tableau,
+            vals={id_col: 123}
+        )
+
+        données = soimême.client.obt_données_tableau_nuée(
+            id_nuée=id_nuée, clef_tableau=clef_tableau,
+            n_résultats_désirés=100, formatDonnées="constellation"
+        )
+
+        idCompte = soimême.client.obt_id_compte()
+
+        soimême.assertEqual(
+            données, {
+                'données': [{
+                    'auteur': idCompte,
+                    id_col: 123,
+                }],
+                'fichiersSFIP': {},
+                'nomTableau': clef_tableau, }
+        )
+
+    @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
+    def test_obt_données_tableau_nuée_format_pandas(soimême):
+        clef_tableau = "clef"
+
+        id_nuée = soimême.client.nuées.créer_nuée()
+        id_var = soimême.client.variables.créerVariable(catégorie="numérique")
+        id_tableau = soimême.client.nuées.ajouterTableauNuée(
+            idNuée=id_nuée,
+            clefTableau=clef_tableau,
+        )
+        id_col = soimême.client.nuées.ajouterColonneTableauNuée(
+            id_tableau=id_tableau,
+            id_variable=id_var
+        )
+        schéma = soimême.client.nuées.générerSchémaBdNuée(id_nuée=id_nuée, licence="ODbl-1_0")
+
+        soimême.client.bds.ajouterÉlémentÀTableauUnique(
+            schémaBd=schéma,
+            id_nuée_unique=id_nuée,
+            clefTableau=clef_tableau,
+            vals={id_col: 123}
+        )
+
+        données = soimême.client.obt_données_tableau_nuée(
+            id_nuée=id_nuée, clef_tableau=clef_tableau,
+            n_résultats_désirés=100, formatDonnées="pandas"
+        )
+        idCompte = soimême.client.obtIdCompte()
+
+        réf = pd.DataFrame({id_col: [123], "auteur": idCompte})
+        pdt.assert_frame_equal(données, réf)
+
 
     @classmethod
     def tearDownClass(cls) -> None:

@@ -172,12 +172,15 @@ class TestClient(TestCase):
 
             données = await client.obt_données_tableau_nuée(
                 id_nuée=id_nuée, clef_tableau=clef_tableau,
-                n_résultats_désirés=100
+                n_résultats_désirés=100, formatDonnées="constellation"
             )
+
+            idCompte = await client.obt_id_compte()
 
         soimême.assertEqual(
             données, {
                 'données': [{
+                    'auteur': idCompte,
                     id_col: 123,
                 }],
                 'fichiersSFIP': {},
