@@ -146,13 +146,76 @@ class TestClient(TestCase):
         réf = pd.DataFrame({id_col: [123]})
         pdt.assert_frame_equal(données, réf)
 
-    @unittest.skip("Doit être implémenté dans l'IPA de Constellation")
     @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
-    async def test_obt_données_réseau(soimême):
-        # async with ouvrir_client() as client:
-        #     données = await client.obt_données_réseau("clef unique bd", "clef unique tableau")
-        raise NotImplementedError
-        # soimême.assertEqual(expected, result)
+    async def test_obt_données_tableau_nuée(soimême):
+        async with ouvrir_client() as client:
+            clef_tableau = "clef"
+
+            id_nuée = await client.nuées.créer_nuée()
+            id_var = await client.variables.créerVariable(catégorie="numérique")
+            id_tableau = await client.nuées.ajouterTableauNuée(
+                idNuée=id_nuée,
+                clefTableau=clef_tableau,
+            )
+            id_col = await client.nuées.ajouterColonneTableauNuée(
+                id_tableau=id_tableau,
+                id_variable=id_var
+            )
+            schéma = await client.nuées.générerSchémaBdNuée(id_nuée=id_nuée, licence="ODbl-1_0")
+
+            await client.bds.ajouterÉlémentÀTableauUnique(
+                schémaBd=schéma,
+                id_nuée_unique=id_nuée,
+                clefTableau=clef_tableau,
+                vals={id_col: 123}
+            )
+
+            données = await client.obt_données_tableau_nuée(
+                id_nuée=id_nuée, clef_tableau=clef_tableau,
+                n_résultats_désirés=100
+            )
+
+        soimême.assertEqual(
+            données, {
+                'données': [{
+                    id_col: 123,
+                }],
+                'fichiersSFIP': {},
+                'nomTableau': clef_tableau, }
+        )
+
+    @unittest.skipIf(not VRAI_SERVEUR, "Test uniquement pour le vrai serveur.")
+    async def test_obt_données_tableau_nuée_format_pandas(soimême):
+        async with ouvrir_client() as client:
+            clef_tableau = "clef"
+
+            id_nuée = await client.nuées.créer_nuée()
+            id_var = await client.variables.créerVariable(catégorie="numérique")
+            id_tableau = await client.nuées.ajouterTableauNuée(
+                idNuée=id_nuée,
+                clefTableau=clef_tableau,
+            )
+            id_col = await client.nuées.ajouterColonneTableauNuée(
+                id_tableau=id_tableau,
+                id_variable=id_var
+            )
+            schéma = await client.nuées.générerSchémaBdNuée(id_nuée=id_nuée, licence="ODbl-1_0")
+
+            await client.bds.ajouterÉlémentÀTableauUnique(
+                schémaBd=schéma,
+                id_nuée_unique=id_nuée,
+                clefTableau=clef_tableau,
+                vals={id_col: 123}
+            )
+
+            données = await client.obt_données_tableau_nuée(
+                id_nuée=id_nuée, clef_tableau=clef_tableau,
+                n_résultats_désirés=100, formatDonnées="pandas"
+            )
+            idCompte = await client.obtIdCompte()
+
+        réf = pd.DataFrame({id_col: [123], "auteur": idCompte})
+        pdt.assert_frame_equal(données, réf)
 
     @unittest.skipIf(VRAI_SERVEUR, "Test uniquement pour le faux serveur.")
     async def test_fonctions_retour(soimême):

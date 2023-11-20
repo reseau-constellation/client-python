@@ -40,7 +40,12 @@ async def une_fois_sans_oublier(
 
     async def f_réception(résultat):
         async with canal_envoie:
-            await canal_envoie.send(résultat)
+            try:
+                await canal_envoie.send(résultat)
+            except trio.ClosedResourceError:
+                # Il se peut qu'une nouvelle réponse de l'IPA Constellation soit envoyée avant
+                # que la commande d'annulation aie été reçue par l'IPA.
+                pass
 
     f_oublier = await pouponnière.start(f_suivre, f_réception)
 

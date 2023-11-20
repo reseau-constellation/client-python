@@ -25,7 +25,7 @@ async def ouvrir_client(port: Optional[int] = None) -> Client:
 
 
 ErreurClientNonInitialisé = trio.ClosedResourceError(
-    "Vous devez appeler `Client` ainsi:"
+    "Tout appel à un instance de `Client` doit avoir lieu dans un bloque de context ainsi :"
     "\n"
     "\nasync with trio.open_nursery() as pouponnière:"
     "\n\tasync with Client(pouponnière) as client:"
@@ -291,15 +291,25 @@ class Client(trio.abc.AsyncResource):
         else:
             raise ValueError(formatDonnées)
 
-    async def obt_données_nuée(soimême, id_nuée: str, clef_tableau: str, langues: list[str] = None):
-        """
-        À faire !
-        """
+    async def obt_données_tableau_nuée(
+            soimême, id_nuée: str, clef_tableau: str, n_résultats_désirés: int,
+            langues: Optional[str | list[str]] = None, formatDonnées="constellation",
+    ):
+        async def f_suivi(f):
+            return await soimême.nuées.suivre_données_exportation_tableau(
+                id_nuée=id_nuée, clef_tableau=clef_tableau,
+                langues=langues,
+                n_résultats_désirés=n_résultats_désirés, f=f
+            )
 
-        async def f_async(f):
-            return await soimême.nuées.suivre_données_exportation(id_nuée, clef_tableau, langues, f)
+        données = await une_fois(f_suivi, soimême.pouponnière)
 
-        return await une_fois(f_async, soimême.pouponnière)
+        if formatDonnées.lower() == "pandas":
+            return tableau_exporté_à_pandas(données)
+        elif formatDonnées.lower() == "constellation":
+            return données
+        else:
+            raise ValueError(formatDonnées)
 
     async def __call__(
             soimême,
