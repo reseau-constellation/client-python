@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "constellationPy"
-version = "0.2.6"
+version = "0.2.7"
 description = "Client Python pour le réseau Constellation."
 authors = ["Julien Jean Malard-Adam <julien.malard@mail.mcgill.ca>"]
 
