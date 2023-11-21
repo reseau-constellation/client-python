@@ -47,7 +47,7 @@ class TestSync(unittest.TestCase):
         id_var = soimême.client.variables.créerVariable(catégorie="numérique")
         id_col = soimême.client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_variable=id_var)
         soimême.client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
-        données = soimême.client.obt_données_tableau(id_tableau=id_tableau)
+        données = soimême.client.obt_données_tableau(id_tableau=id_tableau, formatDonnées="constellation")
 
         soimême.assertEqual(
             données,
@@ -71,7 +71,7 @@ class TestSync(unittest.TestCase):
 
         soimême.client.variables.sauvegarder_noms_variable(id_variable=id_var, noms={"fr": "Précipitation"})
 
-        données = soimême.client.obt_données_tableau(id_tableau=id_tableau, langues=["த", "fr"], formatDonnées="pandas")
+        données = soimême.client.obt_données_tableau(id_tableau=id_tableau, langues=["த", "fr"])
 
         réf = pd.DataFrame({"Précipitation": [123]})
         pdt.assert_frame_equal(données.sort_index(axis=1), réf.sort_index(axis=1))
@@ -85,7 +85,7 @@ class TestSync(unittest.TestCase):
         id_col = soimême.client.tableaux.ajouterColonneTableau(id_tableau=id_tableau, id_variable=id_var)
         soimême.client.tableaux.ajouterÉlément(id_tableau=id_tableau, vals={id_col: 123})
 
-        données = soimême.client.obt_données_tableau(id_tableau=id_tableau, formatDonnées="pandas")
+        données = soimême.client.obt_données_tableau(id_tableau=id_tableau)
 
         réf = pd.DataFrame({id_col: [123]})
         pdt.assert_frame_equal(données, réf)
@@ -155,7 +155,7 @@ class TestSync(unittest.TestCase):
 
         données = soimême.client.obt_données_tableau_nuée(
             id_nuée=id_nuée, clef_tableau=clef_tableau,
-            n_résultats_désirés=100, formatDonnées="pandas"
+            n_résultats_désirés=100
         )
         idCompte = soimême.client.obtIdCompte()
 

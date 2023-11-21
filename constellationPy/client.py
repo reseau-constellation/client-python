@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from typing import Optional, List, Any, Callable, Dict, Union, Tuple, Awaitable
 from uuid import uuid4
 
+import pandas as pd
 import trio
 import trio_websocket as tw
 
@@ -277,7 +278,7 @@ class Client(trio.abc.AsyncResource):
             soimême,
             id_tableau: str,
             langues: Optional[str | list[str]] = None,
-            formatDonnées="constellation",
+            formatDonnées="pandas",
             patience: int | float=1
     ):
         async def f_suivi(f):
@@ -294,7 +295,7 @@ class Client(trio.abc.AsyncResource):
 
     async def obt_données_tableau_nuée(
             soimême, id_nuée: str, clef_tableau: str, n_résultats_désirés: int,
-            langues: Optional[str | list[str]] = None, formatDonnées="constellation",
+            langues: Optional[str | list[str]] = None, formatDonnées="pandas",
             patience: int | float=1
     ):
         async def f_suivi(f):
