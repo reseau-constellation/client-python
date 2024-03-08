@@ -22,20 +22,14 @@ jobs:
     permissions:
       contents: write # Allows this job to create releases
 
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        python-version: ["3.11"]
-        os: [macos-latest]
-      fail-fast: false
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
-      - name: Installer Python ${{ matrix.python-version }}
+      - name: Installer Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.11
 
       - name: Préparation de Node.js
         uses: actions/setup-node@v4
