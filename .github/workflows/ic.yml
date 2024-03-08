@@ -38,7 +38,7 @@ jobs:
     uses: ./.github/workflows/tests.yml
   pypi:
     permissions:
-      contents: read
+      contents: write
       id-token: write  # Allows this job to create releases
     with:
       dry-run: ${{ github.ref_name == 'master' }}
