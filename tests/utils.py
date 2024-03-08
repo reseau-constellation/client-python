@@ -23,7 +23,7 @@ if VRAI_SERVEUR:
             super().__exit__(*args)
             try:
                 soimême.dossier_tempo.cleanup()
-            except NotADirectoryError:
+            except (NotADirectoryError, PermissionError):
                 # Drôle d'erreur sur Windows
                 pass
 
