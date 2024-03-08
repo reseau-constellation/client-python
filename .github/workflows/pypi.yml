@@ -39,8 +39,9 @@ jobs:
 
       - name: Installer dépendances
         run: pdm install
+      - run: pdm build
 
       - name: Publier sur PyPI
         if: ${{ !inputs.dry-run }}
-        run: pdm publish
+        uses: pypa/gh-action-pypi-publish@release/v1
 
