@@ -16,13 +16,13 @@ if VRAI_SERVEUR:
                 autoinstaller=True,
                 exe: TypeExe = EXE_CONSTL
         ):
-            soimême.dossier = tempfile.TemporaryDirectory()
-            super().__init__(port=port, autoinstaller=autoinstaller, dossier=soimême.dossier.name, exe=exe)
+            soimême.dossier_tempo = tempfile.TemporaryDirectory()
+            super().__init__(port=port, autoinstaller=autoinstaller, dossier=soimême.dossier_tempo.name, exe=exe)
 
         def __exit__(soimême, *args):
             super().__exit__(*args)
             try:
-                soimême.dossier.cleanup()
+                soimême.dossier_tempo.cleanup()
             except NotADirectoryError:
                 # Drôle d'erreur sur Windows
                 pass
