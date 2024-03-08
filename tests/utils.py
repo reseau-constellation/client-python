@@ -1,6 +1,5 @@
 import os
 import tempfile
-from os import path
 from typing import Optional
 
 from constellationPy.const import EXE_CONSTL
@@ -18,9 +17,7 @@ if VRAI_SERVEUR:
                 exe: TypeExe = EXE_CONSTL
         ):
             soimême.dossier = tempfile.TemporaryDirectory()
-            sfip = path.join(soimême.dossier.name, "sfip")
-            orbite = path.join(soimême.dossier.name, "orbite")
-            super().__init__(port=port, autoinstaller=autoinstaller, sfip=sfip, orbite=orbite, exe=exe)
+            super().__init__(port=port, autoinstaller=autoinstaller, dossier=soimême.dossier.name, exe=exe)
 
         def __exit__(soimême, *args):
             super().__exit__(*args)

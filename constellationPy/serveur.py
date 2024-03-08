@@ -22,8 +22,7 @@ class ErreurInstallationConstellation(ChildProcessError):
 def lancer_serveur(
         port=None,
         autoinstaller=True,
-        sfip: Optional[Union[str, int]] = None,
-        orbite: Optional[str] = None,
+        dossier: Optional[str] = None,
         exe: TypeExe = EXE_CONSTL
 ) -> Tuple[subprocess.Popen, int]:
     if isinstance(exe, str):
@@ -40,10 +39,8 @@ def lancer_serveur(
     cmd = [*exe, "lancer", "-m"]
     if port:
         cmd += ["-p", str(port)]
-    if orbite:
-        cmd += [f"--doss-orbite={orbite}"]
-    if sfip:
-        cmd += [f"--doss-sfip={sfip}"]
+    if dossier:
+        cmd += [f"--dossier={dossier}"]
 
     p = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, bufsize=0,
@@ -379,16 +376,14 @@ class Serveur(object):
             soimême,
             port: Optional[int] = None,
             autoinstaller=True,
-            sfip: Optional[Union[str, int]] = None,
-            orbite: Optional[str] = None,
+            dossier: Optional[str] = None,
             exe: TypeExe = EXE_CONSTL
     ):
         soimême.port = port
         soimême.autoinstaller = autoinstaller
         soimême.exe = exe
 
-        soimême.sfip = sfip
-        soimême.orbite = orbite
+        soimême.dossier = dossier
 
         soimême.serveur: Optional[subprocess.Popen] = None
 
@@ -398,8 +393,7 @@ class Serveur(object):
         soimême.serveur, soimême.port = lancer_serveur(
             port=soimême.port,
             autoinstaller=soimême.autoinstaller,
-            sfip=soimême.sfip,
-            orbite=soimême.orbite,
+            dossier=soimême.dossier,
             exe=soimême.exe
         )
         changer_contexte(soimême.port)
