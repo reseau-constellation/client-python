@@ -42,5 +42,5 @@ jobs:
 
       - name: Publier sur PyPI
         if: ${{ !inputs.dry-run }}
-        run: pdm publish --build
+        run: pdm publish
 
