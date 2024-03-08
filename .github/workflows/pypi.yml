@@ -31,42 +31,14 @@ jobs:
         with:
           python-version: 3.11
 
-      - name: Préparation de Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 21
-
-      - name: Vérifier installation Node.js
-        run: npm -v
-
-      - name: Installer PNPM
-        uses: pnpm/action-setup@v2.4.0
-        with:
-          version: latest
-
-
       - name: Setup PDM
         uses: pdm-project/setup-pdm@v4
         with:
           python-version: ${{ matrix.python-version }}
           cache: true
 
-      - name: Install dependencies
-        run: pdm install
-
-      #----------------------------------------------
-      # install dependencies if cache does not exist
-      #----------------------------------------------
       - name: Installer dépendances
-        run: pdm install --no-interaction --no-root
-      #----------------------------------------------
-      # install your root project, if required
-      #----------------------------------------------
-      - name: Installer la librairie
-        run: pdm install --no-interaction
-
-      - name: Configurer mot de passe
-        run: pdm config pypi-token.pypi "${{ secrets.PYPI_API_KEY }}"
+        run: pdm install
 
       - name: Publier sur PyPI
         if: ${{ !inputs.dry-run }}
