@@ -41,6 +41,6 @@ jobs:
       contents: write
       id-token: write  # Allows this job to create releases
     with:
-      dry-run: ${{ github.ref_type == 'tag' }}
+      dry-run: ${{ github.ref_type != 'tag' }}
     needs: [ tests ]
     uses: ./.github/workflows/pypi.yml
