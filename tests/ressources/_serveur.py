@@ -207,6 +207,7 @@ def version():
 def lancer(port, m):
     async def main():
         port_ = port or 5000
+        codeSecret = "voici un code pas ben ben secret"
 
         async with trio.open_nursery() as pouponnière:
             async def _lancer_port_ws(p):
@@ -233,7 +234,7 @@ def lancer(port, m):
                             raise e
 
             if m:
-                écrire_à_stdout("MESSAGE MACHINE : {\"type\": \"NŒUD PRÊT\", \"port\": " + str(port_) + "}")
+                écrire_à_stdout("MESSAGE MACHINE : {\"type\": \"NŒUD PRÊT\", \"port\": " + str(port_) + ", \"codeSecret\": \"" + str(codeSecret) + "\"}")
             else:
                 écrire_à_stdout(f"Serveur prêt sur port : {port_}")
 

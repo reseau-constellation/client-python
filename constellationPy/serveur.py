@@ -24,7 +24,7 @@ def lancer_serveur(
         autoinstaller=True,
         dossier: Optional[str] = None,
         exe: TypeExe = EXE_CONSTL
-) -> Tuple[subprocess.Popen, int]:
+) -> Tuple[subprocess.Popen, int, str]:
     if isinstance(exe, str):
         exe = [exe]
 
@@ -56,13 +56,14 @@ def lancer_serveur(
             message = json.loads(ligne.split(":", 1)[1])
             if message["type"] == "NŒUD PRÊT":
                 port = message["port"]
-                return p, port
+                code_secret = message["codeSecret"]
+                return p, port, code_secret
 
     raise ConnectionError("Le serveur n'a pas répondu.")
 
 
-type_contexte = TypedDict("type_contexte", {"port_serveur": Optional[int]})
-context: type_contexte = {"port_serveur": None}
+type_contexte = TypedDict("type_contexte", {"port_serveur": Optional[int], "code_secret": Optional[str]})
+context: type_contexte = {"port_serveur": None, "code_secret": None}
 
 
 class ErreurConnexionContexteExistant(ConnectionError):
@@ -70,19 +71,27 @@ class ErreurConnexionContexteExistant(ConnectionError):
         super().__init__("On ne peut avoir qu'un seule serveur en contexte à la fois.")
 
 
-def changer_contexte(port: int):
+def changer_contexte(port: int, code_secret: str):
     if context["port_serveur"] is not None:
         raise ErreurConnexionContexteExistant()
 
     context["port_serveur"] = port
+    context["code_secret"] = code_secret
 
 
 def effacer_contexte():
     context["port_serveur"] = None
+    context["code_secret"] = None
 
 
-def obtenir_contexte() -> Optional[int]:
-    return context["port_serveur"]
+def obtenir_contexte() -> type_contexte:
+    return context
+
+def obtenir_port_contexte() -> Optional[str]:
+    return obtenir_contexte()["port_serveur"]
+
+def obtenir_code_secret_contexte() -> Optional[str]:
+    return obtenir_contexte()["code_secret"]
 
 
 def mettre_constellation_à_jour(exe: TypeExe = EXE_CONSTL):
@@ -388,15 +397,15 @@ class Serveur(object):
         soimême.serveur: Optional[subprocess.Popen] = None
 
     def __enter__(soimême):
-        if obtenir_contexte():
+        if obtenir_port_contexte():
             raise ErreurConnexionContexteExistant()
-        soimême.serveur, soimême.port = lancer_serveur(
+        soimême.serveur, soimême.port, soimême.code_secret = lancer_serveur(
             port=soimême.port,
             autoinstaller=soimême.autoinstaller,
             dossier=soimême.dossier,
             exe=soimême.exe
         )
-        changer_contexte(soimême.port)
+        changer_contexte(soimême.port, soimême.code_secret)
         return soimême
 
     def __exit__(soimême, *args):

@@ -1,6 +1,6 @@
 # La version minimale de @constl/serveur (paquet npm) compatible avec le client Python
-V_SERVEUR_NÉCESSAIRE = "^1.0.0"
-V_IPA_NÉCESSAIRE = "^1.0.4"
+V_SERVEUR_NÉCESSAIRE = "^2.0.0"
+V_IPA_NÉCESSAIRE = "^1.0.24"
 
 # La commande pour lancer Constellation de la ligne de commande
 EXE_CONSTL = "constl"

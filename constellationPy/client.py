@@ -3,24 +3,26 @@ from __future__ import annotations
 import inspect
 import json
 import logging
+import random
+import urllib
 from contextlib import asynccontextmanager
 from typing import Optional, List, Any, Callable, Dict, Union, Tuple, Awaitable
 from uuid import uuid4
 
-import pandas as pd
+import requests
 import trio
 import trio_websocket as tw
 
 from .const import LIEN_SIGNALEMENT_ERREURS
-from .serveur import obtenir_contexte
+from .serveur import obtenir_contexte, obtenir_code_secret_contexte, obtenir_port_contexte
 from .utils import à_chameau, à_kebab, fais_rien_asynchrone, une_fois, tableau_exporté_à_pandas, attendre_stabilité
 
 
 # Idée de https://stackoverflow.com/questions/48282841/in-trio-how-can-i-have-a-background-task-that-lives-as-long-as-my-object-does
 @asynccontextmanager
-async def ouvrir_client(port: Optional[int] = None) -> Client:
+async def ouvrir_client(port: Optional[int] = None, code_secret: Optional[str] = None) -> Client:
     async with trio.open_nursery() as pouponnière:
-        async with Client(pouponnière, port) as client:
+        async with Client(pouponnière, port, code_secret) as client:
             await client.connecter()
             yield client
 
@@ -41,12 +43,14 @@ class Client(trio.abc.AsyncResource):
             soimême,
             pouponnière: trio.Nursery,
             port: Optional[int] = None,
+            code_secret: Optional[str] = None,
             _client_original: Optional[Client] = None,
             _liste_attributs: Optional[List[str]] = None
     ):
         soimême.pouponnière = pouponnière
         soimême._client_original = _client_original or soimême
         soimême._port = port
+        soimême._code_secret = code_secret
 
         soimême._connexion: Optional[tw.WebSocketConnection] = None
         soimême._canaux: Optional[Tuple[trio.MemorySendChannel, trio.MemoryReceiveChannel]] = None
@@ -61,7 +65,7 @@ class Client(trio.abc.AsyncResource):
     def port(soimême) -> int:
 
         # trouver le port
-        port = soimême._port or soimême._client_original._port or obtenir_contexte()
+        port = soimême._port or soimême._client_original._port or obtenir_port_contexte()
 
         if port is None:
             raise ValueError(
@@ -69,6 +73,23 @@ class Client(trio.abc.AsyncResource):
                 "ou bien spécifier le numéro de port lors de son instantiation : `Client(port=5123)`."
             )
         return port
+
+    @property
+    def code_secret(soimême) -> int:
+
+        # trouver le code_secret
+        code_secret = soimême._code_secret or soimême._client_original._code_secret or obtenir_code_secret_contexte()
+
+        logging.debug("code_secret")
+        logging.debug(code_secret)
+        if code_secret is None:
+            code_secret = soimême.demander_code_secret()
+            if code_secret is None:
+                raise ValueError(
+                    "Vous devez ou bien lancer `Client` de l'intérieur d'un bloc `with Serveur()...`, "
+                    "ou bien spécifier le code secret lors de son instantiation : `Client(code_secret=\"le code secret pour la connexion\")`."
+                )
+        return code_secret
 
     @property
     def connexion(soimême) -> tw.WebSocketConnection:
@@ -98,11 +119,18 @@ class Client(trio.abc.AsyncResource):
         soimême._canal_erreurs = canal_erreurs
 
         # établir la connexion
-        url = f"ws://localhost:{soimême.port}"
+        url = f"ws://localhost:{soimême.port}?code={urllib.parse.quote_plus(soimême.code_secret)}"
         soimême.connexion = await tw.connect_websocket_url(soimême.pouponnière, url)
 
         # démarrer l'écoute
         soimême._context_annuler_écoute = await soimême.pouponnière.start(soimême._écouter)
+
+    def demander_code_secret(soimême):
+        idRequète = f"Python {random.randint(0, 100)}"
+        print("ici")
+        réponse = requests.get(f"http://localhost:{soimême.port}/demande/?id{idRequète}")
+        print(réponse)
+        return réponse.content
 
     async def aclose(soimême):
         if soimême is not soimême._client_original:
@@ -279,7 +307,7 @@ class Client(trio.abc.AsyncResource):
             id_tableau: str,
             langues: Optional[str | list[str]] = None,
             formatDonnées="pandas",
-            patience: int | float=1
+            patience: int | float = 1
     ):
         async def f_suivi(f):
             return await soimême.tableaux.suivre_données_exportation(id_tableau=id_tableau, f=f, langues=langues)
@@ -296,7 +324,7 @@ class Client(trio.abc.AsyncResource):
     async def obt_données_tableau_nuée(
             soimême, id_nuée: str, clef_tableau: str, n_résultats_désirés: int,
             langues: Optional[str | list[str]] = None, formatDonnées="pandas",
-            patience: int | float=1
+            patience: int | float = 1
     ):
         async def f_suivi(f):
             return await soimême.nuées.suivre_données_exportation_tableau(
