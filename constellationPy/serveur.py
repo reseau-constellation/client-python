@@ -8,11 +8,10 @@ from typing import Optional, TypedDict, Union, List, Tuple
 import urllib3
 from semantic_version import SimpleSpec, Version
 
-from .const import V_SERVEUR_NÉCESSAIRE, V_IPA_NÉCESSAIRE, PAQUET_SERVEUR, PAQUET_IPA, EXE_CONSTL
+from .const import V_SERVEUR_NÉCESSAIRE, PAQUET_SERVEUR, EXE_CONSTL
 
 TypeExe = Union[str, List[str]]
 versions_serveur_compatibles = SimpleSpec(V_SERVEUR_NÉCESSAIRE)
-versions_ipa_compatibles = SimpleSpec(V_IPA_NÉCESSAIRE)
 
 
 class ErreurInstallationConstellation(ChildProcessError):
@@ -87,8 +86,10 @@ def effacer_contexte():
 def obtenir_contexte() -> type_contexte:
     return context
 
+
 def obtenir_port_contexte() -> Optional[str]:
     return obtenir_contexte()["port_serveur"]
+
 
 def obtenir_code_secret_contexte() -> Optional[str]:
     return obtenir_contexte()["code_secret"]
@@ -99,7 +100,6 @@ def mettre_constellation_à_jour(exe: TypeExe = EXE_CONSTL):
     assurer_npm_pnpm_installés()
 
     mettre_serveur_à_jour(exe)
-    mettre_ipa_à_jour(exe)
 
 
 def mettre_serveur_à_jour(exe: TypeExe = EXE_CONSTL):
@@ -114,14 +114,8 @@ def mettre_serveur_à_jour(exe: TypeExe = EXE_CONSTL):
 
 
 def obt_version_serveur(exe: TypeExe = EXE_CONSTL) -> Optional[Version]:
-    try:
-        if v := _obt_version(exe, "version"):
-            return Version(v)
-    except ChildProcessError as é:
-        if f"Error: Cannot find module '{PAQUET_IPA}'" in str(é):
-            return
-        else:
-            raise é
+    if v := _obt_version(exe, "version"):
+        return Version(v)
 
 
 def serveur_compatible(version: Version) -> bool:
@@ -168,57 +162,24 @@ def _obt_version(commande: TypeExe, arg="-v") -> Optional[str]:
 
 
 def installer_serveur(version: Version):
-    installer_de_pnpm(PAQUET_SERVEUR, version)
+    assurer_npm_pnpm_installés()
 
+    code_installation = subprocess.Popen(
+        ["curl", "https://raw.githubusercontent.com/reseau-constellation/serveur-ws/principale/installer.cjs"],
+        stdout=subprocess.PIPE,
+    )
+    résultat = subprocess.Popen(["node", "-"], stdin=code_installation.stdout)
+    code_installation.stdout.close()
+    résultat.communicate()
 
-def mettre_ipa_à_jour(exe: TypeExe = EXE_CONSTL):
-    # Si @constl/ipa n'est pas installée, installer @constl/ipa et obtenir versions compatibles avec serveur
-    ipa_installée = ipa_est_installée(exe)
-    if not ipa_installée:
-        logging.debug("Installation de l'IPA de Constellation")
-        installer_ipa()
-        logging.debug("Constellation installée")
-
-    # Obtenir versions ipa compatibles avec serveur
-    version_ipa = obt_version_ipa(exe)
-
-    try:
-        version_ipa_désirée = obt_version_ipa_plus_récente_compatible(exe, version_ipa)
-    except StopIteration:
-        raise ErreurInstallationConstellation(
-            "Aucune version de @constl/ipa compatible n'a pu être détectée. "
-            "Essayez de réinstaller manuellement avec :\n "
-            "`pnpm add -g @constl/ipa@latest @constl/serveur@latest`"
+    if résultat.returncode != 0:
+        raise ConnectionError(
+            f"Erreur d'installation Constellation :\n\t{résultat.stderr.decode()}"
+            f"\n\t{résultat.stdout.decode()}"
         )
-
-    # Installer @constl/ipa à la version la plus récente compatible avec le serveur
-    if version_ipa != version_ipa_désirée:
-        logging.debug(f"Mise à jour de l'IPA de Constellation (courante: {version_ipa}, désirée: {version_ipa_désirée})")
-        installer_ipa(version_ipa_désirée)
-
-
-def ipa_est_installée(exe: TypeExe = EXE_CONSTL) -> bool:
-    try:
-        return _obt_version(exe, "version") is not None
-    except ChildProcessError as é:
-        if "ERR_MODULE_NOT_FOUND" in str(é) and PAQUET_IPA in str(é):
-            return False
-        else:
-            raise é
-
-
-def installer_ipa(version: Union[Version, SimpleSpec, str] = "latest"):
-    installer_de_pnpm(PAQUET_IPA, version)
 
 
 def désinstaller_constellation():
-    try:
-        désinstaller_ipa()
-    except ConnectionError as é:
-        if "This module isn't specified in a package.json file." in str(é):
-            pass
-        else:
-            raise é
     try:
         désinstaller_serveur()
     except ConnectionError as é:
@@ -228,28 +189,8 @@ def désinstaller_constellation():
             raise é
 
 
-def désinstaller_ipa():
-    désinstaller_de_pnpm(PAQUET_IPA)
-
-
 def désinstaller_serveur():
     désinstaller_de_pnpm(PAQUET_SERVEUR)
-
-
-def obt_version_ipa_plus_récente_compatible(exe: TypeExe = EXE_CONSTL, présente: Optional[Version] = None) -> Version:
-    versions_disponibles = obt_versions_dispo_npm(PAQUET_IPA)
-    if présente:
-        versions_disponibles.append(présente)
-    versions_disponibles.sort(reverse=True)
-
-    spécifications_compatibles_serveur = SimpleSpec(_obt_version(exe, "v-constl-obli"))
-    return next(
-        v for v in versions_disponibles if v in spécifications_compatibles_serveur and v in versions_ipa_compatibles
-    )
-
-
-def obt_version_ipa(exe: TypeExe = EXE_CONSTL) -> Optional[Version]:
-    return Version(_obt_version(exe, "v-constl"))
 
 
 @lru_cache
@@ -261,11 +202,6 @@ def _vérifier_installation(exe_: Union[str, Tuple[str]]) -> True:
 
     if isinstance(exe_, tuple):
         exe_ = list(exe_)
-
-    # Si @constl/ipa non installée, erreur
-    ipa_installée = ipa_est_installée(exe_)
-    if not ipa_installée:
-        raise ErreurInstallationConstellation(message_erreur)
 
     # Obtenir version serveur
     version_serveur = obt_version_serveur(exe_)
@@ -279,15 +215,6 @@ def _vérifier_installation(exe_: Union[str, Tuple[str]]) -> True:
     if not serveur_compatible(version_serveur):
         raise ErreurInstallationConstellation(
             message_erreur + f"\nVersion présente de {PAQUET_SERVEUR} : {version_serveur}"
-        )
-
-    # Vérifier version @constl/ipa compatible avec @constl/serveur
-    version_ipa = obt_version_ipa(exe_)
-    spécifications_compatibles = SimpleSpec(_obt_version(exe_, "v-constl-obli"))
-    logging.debug(f"version ipa {version_ipa}")
-    if version_ipa not in spécifications_compatibles or version_ipa not in versions_ipa_compatibles:
-        raise ErreurInstallationConstellation(
-            message_erreur + f"\nVersion présente de {PAQUET_IPA} : {version_ipa}\n Version requise : {spécifications_compatibles} et {versions_ipa_compatibles}"
         )
 
 
@@ -338,24 +265,6 @@ def _installer_nodejs():
 
     # Système opératoire inconnu, ou bien rien n'a fonctionné
     raise OSError(système_opératoire)
-
-
-def installer_de_pnpm(paquet: str, version: Union[Version, SimpleSpec, str] = "latest"):
-    assurer_npm_pnpm_installés()
-
-    résultat_pnpm = subprocess.run(
-        ["pnpm", "add", "-g", paquet + "@" + str(version)],
-        capture_output=True,
-        shell=platform.system() == "Windows"
-    )
-
-    logging.debug(f"Paquet {paquet}, version {version} installé.")
-
-    if résultat_pnpm.returncode != 0:
-        raise ConnectionError(
-            f"Erreur d'installation du paquet {paquet} :\n\t{résultat_pnpm.stderr.decode()}"
-            f"\n\t{résultat_pnpm.stdout.decode()}"
-        )
 
 
 def désinstaller_de_pnpm(paquet):

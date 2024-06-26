@@ -8,12 +8,10 @@ from click_default_group import DefaultGroup
 from trio_websocket import serve_websocket, ConnectionClosed, WebSocketConnection
 
 try:
-    from constellationPy.const import V_SERVEUR_NÉCESSAIRE, V_IPA_NÉCESSAIRE
+    from constellationPy.const import V_SERVEUR_NÉCESSAIRE
 except ModuleNotFoundError:
     # Pour tests sur Ubuntu... je ne suis pas sûr pourquoi ça ne fonctionne pas...
-    V_SERVEUR_NÉCESSAIRE = "^0.3.7"
-    V_IPA_NÉCESSAIRE = "^1.0.4"
-
+    V_SERVEUR_NÉCESSAIRE = "^2.0.6"
 _données = {}
 
 # Nécessaire pour Windows
@@ -184,17 +182,6 @@ def écrire_à_stdout(*message: str):
 def cli():
     pass
 
-
-@click.command()
-def v_constl():
-    écrire_à_stdout(V_IPA_NÉCESSAIRE.strip("^"))
-
-
-@click.command()
-def v_constl_obli():
-    écrire_à_stdout(V_IPA_NÉCESSAIRE)
-
-
 @click.command()
 def version():
     écrire_à_stdout(V_SERVEUR_NÉCESSAIRE.strip("^"))
@@ -240,9 +227,6 @@ def lancer(port, m):
 
     trio.run(main)
 
-
-cli.add_command(v_constl)
-cli.add_command(v_constl_obli)
 cli.add_command(version)
 cli.add_command(lancer)
 
