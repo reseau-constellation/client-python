@@ -174,8 +174,8 @@ def installer_serveur(version: Version):
 
     if résultat.returncode != 0:
         raise ConnectionError(
-            f"Erreur d'installation Constellation :\n\t{résultat.stderr.decode()}"
-            f"\n\t{résultat.stdout.decode()}"
+            f"Erreur d'installation Constellation :\n\t{résultat.stderr.decode() if résultat.stderr else None}"
+            f"\n\t{résultat.stdout.decode() if résultat.stdout else None}"
         )
 
 
