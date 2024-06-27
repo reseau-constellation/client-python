@@ -31,7 +31,7 @@ jobs:
       - name: Préparation de Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 21
+          node-version: latest
 
       - name: Vérifier installation Node.js
         run: npm -v
