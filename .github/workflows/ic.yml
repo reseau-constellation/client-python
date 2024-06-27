@@ -4,6 +4,8 @@ name: Client Python
 on:
   workflow_dispatch:
   push:
+    tags:
+      - 'v*'
     branches:
       - master
       - 'renovate/**'
