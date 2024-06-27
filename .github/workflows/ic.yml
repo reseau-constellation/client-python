@@ -11,7 +11,7 @@ on:
       - '.github/**'
       - '!.github/workflows/ic.yml'
       - '!.github/workflows/pypi.yml'
-      - '!.github/workflows/test.yml'
+      - '!.github/workflows/tests.yml'
       - '**.md'
       - .editorconfig
       - .gitignore
@@ -22,7 +22,7 @@ on:
       - '.github/**'
       - '!.github/workflows/ic.yml'
       - '!.github/workflows/pypi.yml'
-      - '!.github/workflows/test.yml'
+      - '!.github/workflows/tests.yml'
       - '**.md'
       - .editorconfig
       - .gitignore
