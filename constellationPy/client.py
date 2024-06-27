@@ -126,10 +126,8 @@ class Client(trio.abc.AsyncResource):
         soimême._context_annuler_écoute = await soimême.pouponnière.start(soimême._écouter)
 
     def demander_code_secret(soimême):
-        idRequète = f"Python {random.randint(0, 100)}"
-        print("ici")
+        idRequète = f"Python - {random.randint(1000, 9999)}"
         réponse = requests.get(f"http://localhost:{soimême.port}/demande/?id{idRequète}")
-        print(réponse)
         return réponse.content
 
     async def aclose(soimême):
