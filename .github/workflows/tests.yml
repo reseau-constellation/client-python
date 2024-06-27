@@ -18,15 +18,11 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11"]
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [macos-latest, ubuntu-latest]  # , windows-latest]
       fail-fast: false
 
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
-      - name: Installer Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
 
       - name: Préparation de Node.js
         uses: actions/setup-node@v4

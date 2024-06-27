@@ -19,26 +19,22 @@ defaults:
 
 jobs:
   pypi:
-    permissions:
-      contents: write # Allows this job to create releases
-
     runs-on: ubuntu-latest
+
+    permissions:
+      # This permission is needed for private repositories.
+      contents: read
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
 
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
-      - name: Installer Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.11
 
       - name: Setup PDM
         uses: pdm-project/setup-pdm@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.11"
           cache: true
-
-      - name: Installer dépendances
-        run: pdm install
 
       - name: Publier sur PyPI
         if: ${{ !inputs.dry-run }}
