@@ -1,4 +1,5 @@
 import json
+import logging
 import tempfile
 import unittest
 from unittest import TestCase
@@ -22,7 +23,10 @@ class TestClient(TestCase):
 
     async def test_action(soimême):
         async with ouvrir_client() as client:
+            logging.debug("avant")
             id_orbite = await client.obtIdDispositif()
+            logging.debug("ici")
+        logging.debug("bloque terminé")
         soimême.assertIsInstance(id_orbite, str)
 
     async def test_kebab_et_chameau(soimême):

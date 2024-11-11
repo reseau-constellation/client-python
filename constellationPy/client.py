@@ -127,7 +127,7 @@ class Client(trio.abc.AsyncResource):
 
     def demander_code_secret(soimême):
         idRequète = f"Python - {random.randint(1000, 9999)}"
-        réponse = requests.get(f"http://localhost:{soimême.port}/demande/?id{idRequète}")
+        réponse = requests.get(f"http://localhost:{soimême.port}/demande/?id={idRequète}")
         return réponse.content
 
     async def aclose(soimême):
@@ -143,11 +143,11 @@ class Client(trio.abc.AsyncResource):
 
         soimême.écouteurs = {}
 
-    def _enregistrer_écouteur(soimême, id_: str, f):
-        soimême.écouteurs[id_] = f
+    def _enregistrer_écouteur(soimême, idRequête: str, f):
+        soimême.écouteurs[idRequête] = f
 
-    def _effacer_écouteur(soimême, id_: str):
-        soimême.écouteurs.pop(id_)
+    def _effacer_écouteur(soimême, idRequête: str):
+        soimême.écouteurs.pop(idRequête)
 
     async def _écouter(soimême, task_status=trio.TASK_STATUS_IGNORED):
         with trio.CancelScope() as _context:
@@ -161,12 +161,12 @@ class Client(trio.abc.AsyncResource):
                 m_json = json.loads(message)
                 type_ = m_json["type"]
 
-                if "id" in m_json and m_json["id"] in soimême.écouteurs:
-                    await soimême.écouteurs[m_json["id"]](m_json)
+                if "idRequête" in m_json and m_json["idRequête"] in soimême.écouteurs:
+                    await soimême.écouteurs[m_json["idRequête"]](m_json)
 
                 if type_ == "erreur":
                     # On rapporte ici uniquement les erreurs génériques (non spécifiques à une requête)
-                    if "id" in m_json and soimême.canal_erreurs:
+                    if "idRequête" in m_json and soimême.canal_erreurs:
                         m = {"erreur": m_json["erreur"]}
                         await soimême.canal_erreurs.send(json.dumps(m))
 
@@ -188,13 +188,13 @@ class Client(trio.abc.AsyncResource):
 
     async def _appeler_fonction_action(
             soimême,
-            id_: str,
+            idRequête: str,
             adresse_fonction: List[str],
             args: Dict[str, Any]
     ) -> Any:
         message = {
             "type": "action",
-            "id": id_,
+            "idRequête": idRequête,
             "fonction": adresse_fonction,
             "args": args,
         }
@@ -208,7 +208,7 @@ class Client(trio.abc.AsyncResource):
             if v["type"] == "action":
                 retour["val"] = v["résultat"] if "résultat" in v else None
                 retour["prêt"].set()
-                soimême._effacer_écouteur(id_)
+                soimême._effacer_écouteur(idRequête)
             else:
                 soimême._erreur(
                     "Valeur reçue : " + json.dumps(v, ensure_ascii=False, indent=2) +
@@ -221,7 +221,7 @@ class Client(trio.abc.AsyncResource):
                 retour["val"] = None
                 retour["prêt"].set()
 
-        soimême._enregistrer_écouteur(id_, f_suivi)
+        soimême._enregistrer_écouteur(idRequête, f_suivi)
         await soimême._envoyer_message(message)
 
         await retour["prêt"].wait()
@@ -230,7 +230,7 @@ class Client(trio.abc.AsyncResource):
 
     async def _appeler_fonction_suivre(
             soimême,
-            id_: str,
+            idRequête: str,
             adresse_fonction: List[str],
             args: Dict[str, any],
             nom_arg_fonction: str
@@ -244,7 +244,7 @@ class Client(trio.abc.AsyncResource):
 
         message = {
             "type": "suivre",
-            "id": id_,
+            "idRequête": idRequête,
             "fonction": adresse_fonction,
             "args": args,
             "nomArgFonction": nom_arg_fonction
@@ -265,17 +265,17 @@ class Client(trio.abc.AsyncResource):
                 else:
                     f(val["données"])
 
-        soimême._enregistrer_écouteur(id_, f_suivi)
+        soimême._enregistrer_écouteur(idRequête, f_suivi)
         await soimême._envoyer_message(message)
 
         async def f_oublier():
             message_oublier = {
                 "type": "retour",
-                "id": id_,
+                "idRequête": idRequête,
                 "fonction": "fOublier"
             }
             await soimême._envoyer_message(message_oublier)
-            soimême._effacer_écouteur(id_)
+            soimême._effacer_écouteur(idRequête)
 
         await retour["prêt"].wait()
 
@@ -285,7 +285,7 @@ class Client(trio.abc.AsyncResource):
             async def f_retour(*args_):
                 message_retour = {
                     "type": "retour",
-                    "id": id_,
+                    "idRequête": idRequête,
                     "fonction": nom,
                     "args": args_
                 }
@@ -345,18 +345,18 @@ class Client(trio.abc.AsyncResource):
             **argsmc: Any
     ) -> Union[Any, Callable[[], None]]:
 
-        id_ = str(uuid4())
+        idRequête = str(uuid4())
         nom_arg_fonction = next((c for c, v in argsmc.items() if callable(v)), None)
         adresse_fonction = [à_chameau(x) for x in soimême._liste_attributs]
         argsmc = {à_chameau(c): v for c, v in argsmc.items()}
 
         if nom_arg_fonction is not None:
             return await soimême._appeler_fonction_suivre(
-                id_, adresse_fonction=adresse_fonction, args=argsmc, nom_arg_fonction=nom_arg_fonction
+                idRequête, adresse_fonction=adresse_fonction, args=argsmc, nom_arg_fonction=nom_arg_fonction
             )
         else:
             return await soimême._appeler_fonction_action(
-                id_, adresse_fonction=adresse_fonction, args=argsmc
+                idRequête, adresse_fonction=adresse_fonction, args=argsmc
             )
 
     def __getattr__(soimême, item):

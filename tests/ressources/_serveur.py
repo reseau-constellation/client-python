@@ -22,7 +22,7 @@ if isinstance(sys.stdout, io.TextIOWrapper):
 def erreur_fonction_non_définie(message):
     return {
         "type": "erreur",
-        "id": message["id"],
+        "idRequête": message["idRequête"],
         "erreur": f"Fonction `Client.{'.'.join(message['fonction'])}()` n'existe pas ou n'est pas une fonction."
     }
 
@@ -36,23 +36,23 @@ class Suiveur(object):
         soimême.connexions = {}
         soimême.valeur = None
 
-    async def suivre(soimême, id_, ws):
-        soimême.connexions[id_] = ws
+    async def suivre(soimême, idRequête, ws):
+        soimême.connexions[idRequête] = ws
         await envoyer_message_à_ws({
             "type": "suivre",
-            "id": id_,
+            "idRequête": idRequête,
             "données": soimême.valeur
         }, ws)
 
-    def oublier(soimême, id_):
-        soimême.connexions.pop(id_)
+    def oublier(soimême, idRequête):
+        soimême.connexions.pop(idRequête)
 
     async def changerValeur(soimême, val):
         soimême.valeur = val
-        for id_, ws in soimême.connexions.items():
+        for idRequête, ws in soimême.connexions.items():
             await envoyer_message_à_ws({
                 "type": "suivre",
-                "id": id_,
+                "idRequête": idRequête,
                 "données": soimême.valeur
             }, ws)
 
@@ -64,24 +64,24 @@ class Chercheur(object):
     def __init__(soimême):
         soimême.connexions = {}
 
-    async def rechercher(soimême, id_, taille, ws):
-        soimême.connexions[id_] = ws
+    async def rechercher(soimême, idRequête, taille, ws):
+        soimême.connexions[idRequête] = ws
         await envoyer_message_à_ws({
             "type": "suivre",
-            "id": id_,
+            "idRequête": idRequête,
             "données": list(range(taille))
         }, ws)
 
-    def oublier(soimême, id_):
-        soimême.connexions.pop(id_)
+    def oublier(soimême, idRequête):
+        soimême.connexions.pop(idRequête)
 
-    async def changerTaille(soimême, id_: str, taille: int):
-        if id_ not in soimême.connexions:
+    async def changerTaille(soimême, idRequête: str, taille: int):
+        if idRequête not in soimême.connexions:
             return  # Si déjà annulé
-        ws = soimême.connexions[id_]
+        ws = soimême.connexions[idRequête]
         await envoyer_message_à_ws({
             "type": "suivre",
-            "id": id_,
+            "idRequête": idRequête,
             "données": list(range(taille))
         }, ws)
 
@@ -102,33 +102,33 @@ async def traiter_message(message, ws: WebSocketConnection):
         if fonction == ("fonctionSuivi",):
             await envoyer_message_à_ws({
                 "type": "suivrePrêt",
-                "id": message["id"]
+                "idRequête": message["idRequête"]
             }, ws)
-            await suiveur.suivre(message["id"], ws)
+            await suiveur.suivre(message["idRequête"], ws)
         elif fonction == ("fonctionRecherche",):
             await envoyer_message_à_ws({
                 "type": "suivrePrêt",
-                "id": message["id"],
+                "idRequête": message["idRequête"],
                 "fonctions": ["fChangerN"]
             }, ws)
-            await chercheur.rechercher(message["id"], taille=message["args"]["nRésultatsDésirés"], ws=ws)
+            await chercheur.rechercher(message["idRequête"], taille=message["args"]["nRésultatsDésirés"], ws=ws)
         else:
             await envoyer_message_à_ws(erreur_fonction_non_définie(message), ws)
 
     elif type_ == "retour":
-        id_ = message["id"]
+        idRequête = message["idRequête"]
         fonction = message["fonction"]
         if fonction == "fChangerN":
-            await chercheur.changerTaille(id_, taille=message["args"][0])
+            await chercheur.changerTaille(idRequête, taille=message["args"][0])
 
     elif type_ == "oublier":
-        id_ = message["id"]
-        if id_ in suiveur:
-            suiveur.oublier(id_)
-        elif id_ in chercheur:
-            chercheur.oublier(id_)
+        idRequête = message["idRequête"]
+        if idRequête in suiveur:
+            suiveur.oublier(idRequête)
+        elif idRequête in chercheur:
+            chercheur.oublier(idRequête)
         else:
-            raise ValueError(id_ + " n'est pas suivi.")
+            raise ValueError(idRequête + " n'est pas suivi.")
 
     elif type_ == "action":
         fonction = tuple(message["fonction"])
@@ -136,21 +136,21 @@ async def traiter_message(message, ws: WebSocketConnection):
             résultat = "1234567890"
             await envoyer_message_à_ws({
                 "type": "action",
-                "id": message["id"],
+                "idRequête": message["idRequête"],
                 "résultat": résultat,
             }, ws)
         elif fonction == ("ceciEstUnTest", "deSousModule"):
             résultat = "C'est beau"
             await envoyer_message_à_ws({
                 "type": "action",
-                "id": message["id"],
+                "idRequête": message["idRequête"],
                 "résultat": résultat,
             }, ws)
         elif fonction == ("changerValeurSuivie",):
             await suiveur.changerValeur(message["args"]["x"])
             await envoyer_message_à_ws({
                 "type": "action",
-                "id": message["id"],
+                "idRequête": message["idRequête"],
             }, ws)
         else:
             await envoyer_message_à_ws(erreur_fonction_non_définie(message), ws)
@@ -158,7 +158,7 @@ async def traiter_message(message, ws: WebSocketConnection):
     else:
         raise {
             "type": "action",
-            "id": message["id"] if "id" in message else None,
+            "idRequête": message["idRequête"] if "idRequête" in message else None,
             "résultat": f"Type `{type_}` inconnu.",
         }
 
