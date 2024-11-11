@@ -1,6 +1,6 @@
 [project]
 name = "constellationPy"
-version = "1.1.1"
+version = "1.2.0"
 description = "Client Python pour le réseau Constellation."
 authors = [
     {name = "Julien Jean Malard-Adam", email = "julien.malard@mail.mcgill.ca"},
