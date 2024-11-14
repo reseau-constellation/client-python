@@ -2,7 +2,7 @@
 [![Paquet Python](https://github.com/reseau-constellation/client-python/actions/workflows/ic.yml/badge.svg?branch=master)](https://github.com/reseau-constellation/client-python/actions/workflows/ic.yml)
 [![codecov](https://codecov.io/github/reseau-constellation/client-python/graph/badge.svg?token=F5dfS5Epsg)](https://codecov.io/github/reseau-constellation/client-python)
 
-Cette librarie offre un client [Constellation](https://reseau-constellation.github.io/constellation)
+Cette librarie offre un client [Constellation](https://réseau-constellation.ca)
 pour Python. Elle fonctionne en lançant
 un [serveur ws Constellation](https://github.com/reseau-constellation/serveur-ws)
 local, avec lequel elle gère ensuite la communication par websocket.
@@ -185,7 +185,7 @@ with Serveur():
 * Vous vous demandez où trouver tous ces drôles de « id tableau » pour les bases de données qui vous intéressent ? Il
   s'agit de l'identifiant unique d'un tableau ou d'une base de données, que vous pouvez récupérer lorsque vous créez la
   base de données, ou bien visuellement avec
-  l'[appli Constellation](https://reseau-constellation.github.io/constellation)
+  l'[appli Constellation](https://appli.réseau-constellation.ca)
   (recherchez l'icône lien 🔗).
 
 #### Fonctions de suivi
