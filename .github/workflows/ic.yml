@@ -38,8 +38,3 @@ concurrency:
 jobs:
   tests:
     uses: ./.github/workflows/tests.yml
-  pypi:
-    permissions:
-      id-token: write  # Allows this job to create releases
-    needs: [ tests ]
-    uses: ./.github/workflows/pypi.yml
