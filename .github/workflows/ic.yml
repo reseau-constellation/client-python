@@ -32,7 +32,7 @@ on:
       - '.vscode/**'
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ic-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -40,9 +40,6 @@ jobs:
     uses: ./.github/workflows/tests.yml
   pypi:
     permissions:
-      contents: write
       id-token: write  # Allows this job to create releases
-    with:
-      dry-run: ${{ github.ref_type != 'tag' }}
     needs: [ tests ]
     uses: ./.github/workflows/pypi.yml

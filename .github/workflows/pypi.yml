@@ -1,41 +1,24 @@
 name: Tests
 
 on:
-  workflow_call:
-    inputs:
-      dry-run:
-        description: 'Compiles the app but not upload artifacts to distribution server'
-        default: false
-        required: false
-        type: boolean
-
-concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: true
-
-defaults:
-  run:
-    shell: 'bash'
+  release:
+    types: [ published ]
 
 jobs:
-  pypi:
+  publier-pypi:
     runs-on: ubuntu-latest
 
     permissions:
-      # This permission is needed for private repositories.
-      contents: read
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
 
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
+      - uses: actions/checkout@v4
 
       - name: Setup PDM
         uses: pdm-project/setup-pdm@v4
         with:
-          python-version: "3.11"
           cache: true
 
       - name: Publier sur PyPI
-        if: ${{ !inputs.dry-run }}
         run: pdm publish
