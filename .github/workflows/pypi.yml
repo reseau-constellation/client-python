@@ -1,4 +1,4 @@
-name: Tests
+name: PyPI
 
 on:
   release:
@@ -9,13 +9,13 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      # IMPORTANT: this permission is mandatory for trusted publishing
+      # IMPORTANT : nécessaire pour la publication automatisée sur PyPI
       id-token: write
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup PDM
+      - name: Installer PDM
         uses: pdm-project/setup-pdm@v4
         with:
           cache: true
