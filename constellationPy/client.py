@@ -14,7 +14,7 @@ import trio
 import trio_websocket as tw
 
 from .const import LIEN_SIGNALEMENT_ERREURS
-from .serveur import obtenir_contexte, obtenir_code_secret_contexte, obtenir_port_contexte
+from .serveur import obtenir_code_secret_contexte, obtenir_port_contexte
 from .utils import à_chameau, à_kebab, fais_rien_asynchrone, une_fois, tableau_exporté_à_pandas, attendre_stabilité
 
 
@@ -82,6 +82,7 @@ class Client(trio.abc.AsyncResource):
 
         logging.debug("code_secret")
         logging.debug(code_secret)
+
         if code_secret is None:
             code_secret = soimême.demander_code_secret()
             if code_secret is None:
@@ -125,9 +126,12 @@ class Client(trio.abc.AsyncResource):
         # démarrer l'écoute
         soimême._context_annuler_écoute = await soimême.pouponnière.start(soimême._écouter)
 
-    def demander_code_secret(soimême):
-        idRequète = f"Python - {random.randint(1000, 9999)}"
-        réponse = requests.get(f"http://localhost:{soimême.port}/demande/?id={idRequète}")
+    def demander_code_secret(soimême, idRequête):
+        idRequête = idRequête or f"Python - {random.randint(1000, 9999)}"
+        print(
+            f"En attente du code secret. Veuillez approuver la requête « {idRequête} » sur l'application Constellation."
+        )
+        réponse = requests.get(f"http://localhost:{soimême.port}/demande/?id={urllib.parse.quote_plus(idRequête)}")
         return réponse.content
 
     async def aclose(soimême):
