@@ -26,11 +26,11 @@ class TestSync(unittest.TestCase):
         soimême.assertEqual(test, "C'est beau")
 
     def test_fonction_qui_nexiste_pas(soimême):
-        with soimême.assertRaises(AttributeError):
+        with soimême.assertRaises(ExceptionGroup):
             soimême.client.cette_fonction_nexiste_pas()
 
     def test_sousmodule_qui_nexiste_pas(soimême):
-        with soimême.assertRaises(AttributeError):
+        with soimême.assertRaises(ExceptionGroup):
             soimême.client.ce_module_nexiste_pas.ni_cette_fonction()
 
     @unittest.skipIf(VRAI_SERVEUR, "Test uniquement pour le faux serveur")

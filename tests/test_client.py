@@ -39,12 +39,12 @@ class TestClient(TestCase):
         soimême.assertEqual(test, "C'est beau")
 
     async def test_fonction_qui_nexiste_pas(soimême):
-        with soimême.assertRaises(AttributeError):
+        with soimême.assertRaises(ExceptionGroup) as e:
             async with ouvrir_client() as client:
                 await client.cette_fonction_nexiste_pas()
 
     async def test_sousmodule_qui_nexiste_pas(soimême):
-        with soimême.assertRaises(AttributeError):
+        with soimême.assertRaises(ExceptionGroup):
             async with ouvrir_client() as client:
                 await client.ce_module_nexiste_pas.ni_cette_fonction()
 
