@@ -19,7 +19,7 @@ class ClientSync(object):
         argsmc = {c: v for c, v in argsmc.items()}  # Ne pas convertir à chameau ici ; le client asynchrone s'en occupe
 
         async def f_async():
-            async with ouvrir_client() as client:
+            async with ouvrir_client(soimême.port) as client:
                 f_client = client
                 for x in soimême._liste_attributs:
                     f_client = getattr(f_client, x)
