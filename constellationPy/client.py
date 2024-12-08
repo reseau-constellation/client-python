@@ -126,10 +126,10 @@ class Client(trio.abc.AsyncResource):
         # démarrer l'écoute
         soimême._context_annuler_écoute = await soimême.pouponnière.start(soimême._écouter)
 
-    def demander_code_secret(soimême, idRequête):
+    def demander_code_secret(soimême, idRequête=None):
         idRequête = idRequête or f"Python - {random.randint(1000, 9999)}"
         print(
-            f"En attente du code secret. Veuillez approuver la requête « {idRequête} » sur l'application Constellation."
+            f"En attente d'autorisation. Veuillez approuver la requête « {idRequête} » sur l'application Constellation."
         )
         réponse = requests.get(f"http://localhost:{soimême.port}/demande/?id={urllib.parse.quote_plus(idRequête)}")
         return réponse.content
