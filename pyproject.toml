@@ -7,7 +7,7 @@ authors = [
 ]
 dependencies = [
     "trio-websocket<1.0.0,>=0.11.0",
-    "pandas<3.0.0,>=2.0.3",
+    "pandas<3.0.6,>=3.0.5",
     "trio<1.0.0,>=0.23.1",
     "semantic-version<3.0.0,>=2.8.5",
     "click<9.0.0,>=8.0.3",
